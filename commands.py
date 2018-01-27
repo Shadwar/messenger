@@ -24,6 +24,9 @@ import time
 class Command(object):
     pass
 
+    def __bytes__(self):
+        return self.__str__().encode()
+
 
 class Response(Command):
     pass
