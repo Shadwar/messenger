@@ -1,5 +1,5 @@
 import json
-import datetime
+import time
 
 # Коды ошибок:
 # 1xx​- информационные сообщения:
@@ -44,7 +44,7 @@ class AlertResponse(Response):
     def __str__(self):
         command = {
             'response': self.code,
-            'time': datetime.time(),
+            'time': int(time.time()),
             'alert': self.message
         }
         return json.dumps(command)
@@ -65,7 +65,7 @@ class ErrorResponse(Response):
     def __str__(self):
         command = {
             'response': self.code,
-            'time': datetime.time(),
+            'time': int(time.time()),
             'error': self.message
         }
         return json.dumps(command)
@@ -83,7 +83,7 @@ class ProbeCommand(Command):
     def __str__(self):
         command = {
             'action': ProbeCommand.action,
-            'time': datetime.time()
+            'time': int(time.time())
         }
         return json.dumps(command)
 
@@ -108,7 +108,7 @@ class AuthenticateCommand(Command):
     def __str__(self):
         command = {
             'action': AuthenticateCommand.action,
-            'time': datetime.time(),
+            'time': int(time.time()),
             'user': {
                 'account_name': self.account,
                 'password': self.password
@@ -154,7 +154,7 @@ class PresenceCommand(Command):
     def __str__(self):
         command = {
             'action': PresenceCommand.action,
-            'time': datetime.time(),
+            'time': int(time.time()),
             'type': PresenceCommand.type,
             'user': {
                 'account_name': self.account,
@@ -187,7 +187,7 @@ class MessageCommand(Command):
     def __str__(self):
         command = {
             'action': self.__class__.action,
-            'time': datetime.time(),
+            'time': int(time.time()),
             'to': self.receiver,
             'from': self.sender,
             'encoding': self.encoding,
@@ -212,7 +212,7 @@ class ChatJoinCommand(Command):
     def __str__(self):
         command = {
             'action': self.__class__.action,
-            'time': datetime.time(),
+            'time': int(time.time()),
             'room': self.room
         }
         return json.dumps(command)
@@ -234,7 +234,7 @@ class ChatLeaveCommand(Command):
     def __str__(self):
         command = {
             'action': self.__class__.action,
-            'time': datetime.time(),
+            'time': int(time.time()),
             'room': self.room
         }
         return json.dumps(command)
