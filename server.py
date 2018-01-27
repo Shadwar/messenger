@@ -19,8 +19,9 @@ class Server(object):
         self.socket.listen(5)
         self.socket.settimeout(5)
 
+        # TODO: Сделать обработку отдельных клиентов по тредам
+        sock, addr = self.socket.accept()
         while True:
-            sock, addr = self.socket.accept()
             received = sock.recv(1024)
             print(received)
             sock.send(b'321321')
