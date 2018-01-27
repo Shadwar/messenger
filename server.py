@@ -1,11 +1,31 @@
 import socket
 import json
 import sys
+from collections import namedtuple
+
+import commands
+
+
+User = namedtuple('User', 'sock addr')
+
+
+class Handler(object):
+    pass
+
+
+class AuthenticateHandler(Handler):
+    """ Обработчик аутентификации пользователя
+        TODO: добавить проверку пользователя в базе данных
+    """
+    @staticmethod
+    def handle(command):
+        return bytes(commands.Response(200))
 
 
 class Server(object):
     """ Сервер мессенджера
     """
+    client_sockets = []
 
     def __init__(self, ip, port):
         self.ip = ip
@@ -20,11 +40,21 @@ class Server(object):
         self.socket.settimeout(5)
 
         # TODO: Сделать обработку отдельных клиентов по тредам
-        sock, addr = self.socket.accept()
+        user = User(*self.socket.accept())
+        Server.client_sockets.append(user)
+
         while True:
-            received = sock.recv(1024)
-            print(received)
-            sock.send(b'321321')
+            raw_data = user.sock.recv(1024)
+            command = json.loads(raw_data.decode())
+            self.processing(user, command)
+
+    def processing(self, user, command):
+        """ Обработка поступившей команды. """
+        if command['action'] == 'authenticate':
+            result = AuthenticateHandler.handle(command)
+            user.sock.send(result)
+        if command['action'] == 'quit':
+            Server.client_sockets.remove(user)
 
 
 if __name__ == '__main__':

@@ -1,6 +1,7 @@
 import socket
 import json
 import sys
+import commands
 
 
 class Client(object):
@@ -16,10 +17,16 @@ class Client(object):
         """
         self.socket.connect((self.ip, self.port))
 
-        while True:
-            self.socket.send(b'12345')
-            received = self.socket.recv(1024)
-            print(received)
+        # Аутентификация пользователя
+        auth_command = commands.AuthenticateCommand('ivan', 'vlado12')
+        self.socket.send(bytes(auth_command))
+        response = json.loads(self.socket.recv(1024).decode())
+        print(response)
+
+        # while True:
+        #     self.socket.send(b'12345')
+        #     received = self.socket.recv(1024)
+        #     print(received)
 
 
 if __name__ == '__main__':

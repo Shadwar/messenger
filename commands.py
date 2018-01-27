@@ -25,11 +25,19 @@ class Command(object):
     pass
 
     def __bytes__(self):
-        return self.__str__().encode()
+        return str(self).encode()
 
 
 class Response(Command):
-    pass
+    """ Ответ сервера """
+    def __init__(self, code):
+        self.code = code
+
+    def __str__(self):
+        command = {
+            'response': self.code
+        }
+        return json.dumps(command)
 
 
 class AlertResponse(Response):
