@@ -17,16 +17,22 @@ class Client(object):
         """
         self.socket.connect((self.ip, self.port))
 
-        # Аутентификация пользователя
+        if self.authenticate():
+            while True:
+                debug_pause = input('next packet:')
+                presence_command = commands.PresenceCommand('ivan', "I'm here")
+                self.socket.send(bytes(presence_command))
+                received = self.socket.recv(1024)
+                print(received)
+
+    def authenticate(self):
+        """ Аутентификация пользователя
+            :return: True|False - в зависимости от успеха
+        """
         auth_command = commands.AuthenticateCommand('ivan', 'vlado12')
         self.socket.send(bytes(auth_command))
         response = json.loads(self.socket.recv(1024).decode())
-        print(response)
-
-        # while True:
-        #     self.socket.send(b'12345')
-        #     received = self.socket.recv(1024)
-        #     print(received)
+        return response.get('response', 404) == '202'
 
 
 if __name__ == '__main__':

@@ -72,8 +72,11 @@ class Server(object):
         if command['action'] == 'authenticate':
             result = AuthenticateHandler.handle(command)
             user.sock.send(result)
-        if command['action'] == 'quit':
+        elif command['action'] == 'quit':
             Server.client_sockets.remove(user)
+        elif command['action'] == 'presence':
+            result = PresenceHandler.handle(command)
+            user.sock.send(result)
 
 
 if __name__ == '__main__':
