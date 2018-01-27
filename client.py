@@ -4,18 +4,28 @@ import sys
 import commands
 
 
+class Handler(object):
+    pass
+
+
+class ProbeHandler(Handler):
+    @staticmethod
+    def handle(command):
+        return bytes(commands.PresenceCommand('ivan', "I'm here"))
+
+
 class Client(object):
     """ Клиент мессенджера
     """
-    def __init__(self, ip, port):
-        self.ip = ip
+    def __init__(self, addr, port):
+        self.addr = addr
         self.port = port
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
     def run(self):
         """ Запуск клиента, подключение к серверу, запуск цикла обработки сообщений
         """
-        self.socket.connect((self.ip, self.port))
+        self.socket.connect((self.addr, self.port))
 
         if self.authenticate():
             while True:
@@ -40,15 +50,15 @@ if __name__ == '__main__':
 
     if len(args) not in (2, 3):
         print("Ошибка запуска клиента:")
-        print("client.py ip [port]")
+        print("client.py addr [port]")
         sys.exit()
 
-    ip = args[1]
+    addr = args[1]
 
     try:
         port = int(args[2])
     except Exception:
-        port = 5555
+        port = 7777
 
-    client = Client(ip, port)
+    client = Client(addr, port)
     client.run()

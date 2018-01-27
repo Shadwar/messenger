@@ -83,16 +83,17 @@ if __name__ == '__main__':
     args = sys.argv
     # Получаем ip и port из коммандной строки,
     # показывать ошибку, если ip не указан
-    if len(args) not in (2, 3):
+    if len(args) not in (3, 5):
         print("Ошибка запуска сервера:")
-        print("server.py ip [port]")
+        print("server.py -a addr [port]")
         sys.exit()
 
-    ip = args[1]
-    try:
-        port = int(args[2])
-    except Exception:
-        port = 5555
+    port = 7777
+    for i, s in enumerate(args[1:]):
+        if s == '-a':
+            addr = args[i+1]
+        elif s == '-p':
+            port = int(args[2])
 
-    server = Server(ip, port)
+    server = Server(addr, port)
     server.run()
