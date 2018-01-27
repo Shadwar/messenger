@@ -10,12 +10,31 @@ User = namedtuple('User', 'sock addr')
 
 
 class Handler(object):
+    """
+        TODO: подумать над тем, чтобы в хэндлеры передавать объект со списком пользователей и чатов
+    """
     pass
 
 
 class AuthenticateHandler(Handler):
     """ Обработчик аутентификации пользователя
         TODO: добавить проверку пользователя в базе данных
+    """
+    @staticmethod
+    def handle(command):
+        return bytes(commands.Response(202))
+
+
+class QuitHandler(Handler):
+    """ Обработчик выхода пользователя.
+    """
+    @staticmethod
+    def handle(command):
+        return bytes(commands.Response(200))
+
+
+class PresenceHandler(Handler):
+    """ Обработчик присутствия пользователя на сервере.
     """
     @staticmethod
     def handle(command):

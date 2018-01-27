@@ -31,7 +31,7 @@ class Command(object):
 class Response(Command):
     """ Ответ сервера """
     def __init__(self, code):
-        self.code = code
+        self.code = str(code)
 
     def __str__(self):
         command = {
@@ -49,7 +49,7 @@ class AlertResponse(Response):
     }
     """
     def __init__(self, code, message=''):
-        self.code = code
+        super().__init__(code)
         self.message = message
 
     def __str__(self):
@@ -70,7 +70,7 @@ class ErrorResponse(Response):
     }
     """
     def __init__(self, code, message=''):
-        self.code = code
+        super().__init__(code)
         self.message = message
 
     def __str__(self):
