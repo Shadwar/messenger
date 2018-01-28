@@ -4,14 +4,16 @@ import sys
 import commands
 
 
-class Handler(object):
-    pass
+class ClientCommandHandler(object):
+    """ Обработчик команд, поступивших от сервера """
+    def __init__(self, name, sock):
+        self.name = name
+        self.socket = sock
 
-
-class ProbeHandler(Handler):
-    @staticmethod
-    def handle(command):
-        return bytes(commands.PresenceCommand('ivan', "I'm here"))
+    def handle(self, command):
+        """ Обработка команд """
+        if command['action'] == 'probe':
+            self.socket.send(bytes(commands.PresenceCommand('ivan', "I'm here")))
 
 
 class Client(object):
@@ -21,6 +23,7 @@ class Client(object):
         self.addr = addr
         self.port = port
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.handler = ClientCommandHandler('ivan', self.socket)
 
     def run(self):
         """ Запуск клиента, подключение к серверу, запуск цикла обработки сообщений
@@ -32,8 +35,11 @@ class Client(object):
                 debug_pause = input('next packet:')
                 presence_command = commands.PresenceCommand('ivan', "I'm here")
                 self.socket.send(bytes(presence_command))
-                received = self.socket.recv(1024)
-                print(received)
+                raw_data = self.socket.recv(1024)
+                command = json.loads(raw_data.decode())
+                print(command)
+                if 'action' in command:
+                    self.handler.handle(command)
 
     def authenticate(self):
         """ Аутентификация пользователя

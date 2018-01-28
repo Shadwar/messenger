@@ -63,7 +63,9 @@ class Server(object):
         while True:
             raw_data = user.sock.recv(1024)
             command = json.loads(raw_data.decode())
-            self.handler.handle(command, user)
+            print(command)
+            if 'action' in command:
+                self.handler.handle(command, user)
 
 
 if __name__ == '__main__':
@@ -76,11 +78,11 @@ if __name__ == '__main__':
         sys.exit()
 
     port = 7777
-    for i, s in enumerate(args[1:]):
+    for i, s in enumerate(args):
         if s == '-a':
             addr = args[i+1]
         elif s == '-p':
-            port = int(args[2])
+            port = int(args[i+1])
 
     server = Server(addr, port)
     server.run()
