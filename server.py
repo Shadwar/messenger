@@ -9,47 +9,45 @@ import commands
 User = namedtuple('User', 'sock addr')
 
 
-class Handler(object):
-    """
-        TODO: подумать над тем, чтобы в хэндлеры передавать объект со списком пользователей и чатов
-    """
-    pass
+class ServerCommandHandler(object):
+    """ Серверный обработчик команд, поступаемых от клиента """
+    def __init__(self, users):
+        self.users = users
 
+    def handle(self, command, user):
+        """ Обработка поступившей команды. """
+        if command['action'] == 'authenticate':
+            self.authenticate(command, user)
+        elif command['action'] == 'quit':
+            self.quit(user)
+        elif command['action'] == 'presence':
+            self.presence(command, user)
 
-class AuthenticateHandler(Handler):
-    """ Обработчик аутентификации пользователя
-        TODO: добавить проверку пользователя в базе данных
-    """
-    @staticmethod
-    def handle(command):
-        return bytes(commands.Response(202))
+    def authenticate(self, command, user):
+        """ Аутентификация пользователя """
+        result = bytes(commands.Response(202))
+        user.sock.send(result)
 
+    def quit(self, user):
+        """ Выход пользователя с сервера """
+        self.users.remove(user)
+        user.sock.send(bytes(commands.Response(200)))
+        user.sock.close()
 
-class QuitHandler(Handler):
-    """ Обработчик выхода пользователя.
-    """
-    @staticmethod
-    def handle(command):
-        return bytes(commands.Response(200))
-
-
-class PresenceHandler(Handler):
-    """ Обработчик присутствия пользователя на сервере.
-    """
-    @staticmethod
-    def handle(command):
-        return bytes(commands.Response(200))
+    def presence(self, command, user):
+        """ Подтверждение нахождения пользователя на сервере """
+        user.sock.send(bytes(commands.Response(200)))
 
 
 class Server(object):
     """ Сервер мессенджера
     """
-    client_sockets = []
-
     def __init__(self, ip, port):
         self.ip = ip
         self.port = port
+        self.users = []
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.handler = ServerCommandHandler(self.users)
 
     def run(self):
         """ Запуск сервера
@@ -60,23 +58,12 @@ class Server(object):
 
         # TODO: Сделать обработку отдельных клиентов по тредам
         user = User(*self.socket.accept())
-        Server.client_sockets.append(user)
+        self.users.append(user)
 
         while True:
             raw_data = user.sock.recv(1024)
             command = json.loads(raw_data.decode())
-            self.processing(user, command)
-
-    def processing(self, user, command):
-        """ Обработка поступившей команды. """
-        if command['action'] == 'authenticate':
-            result = AuthenticateHandler.handle(command)
-            user.sock.send(result)
-        elif command['action'] == 'quit':
-            Server.client_sockets.remove(user)
-        elif command['action'] == 'presence':
-            result = PresenceHandler.handle(command)
-            user.sock.send(result)
+            self.handler.handle(command, user)
 
 
 if __name__ == '__main__':
@@ -85,7 +72,7 @@ if __name__ == '__main__':
     # показывать ошибку, если ip не указан
     if len(args) not in (3, 5):
         print("Ошибка запуска сервера:")
-        print("server.py -a addr [port]")
+        print("server.py -a addr [-p port]")
         sys.exit()
 
     port = 7777
