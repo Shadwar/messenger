@@ -1,6 +1,5 @@
 import unittest
 from unittest.mock import Mock, patch
-import socket
 import json
 import server
 import commands
@@ -13,7 +12,8 @@ class TestServer(unittest.TestCase):
             mock_socket.return_value.bind.return_value = None
             mock_socket.return_value.listen.return_value = None
             mock_socket.return_value.settimeout.return_value = None
-            mock_socket.return_value.accept.return_value = (None, None)
+            mock_socket.return_value.setblocking.return_value = None
+            mock_socket.return_value.accept.return_value = (mock_socket, None)
 
             serv = server.Server('127.0.0.1', 7777)
             self.assertEqual(len(serv.users), 0)
@@ -31,7 +31,6 @@ class TestServer(unittest.TestCase):
             self.assertTrue(sock.bind.called)
             self.assertTrue(sock.bind.listen)
             self.assertTrue(sock.bind.settimeout)
-
 
 
 class TestHandlers(unittest.TestCase):

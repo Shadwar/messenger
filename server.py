@@ -23,17 +23,17 @@ class ServerCommandHandler(object):
     def authenticate(self, command, user):
         """ Аутентификация пользователя """
         result = bytes(commands.Response(202))
-        user.sock.send(result)
+        user.send(result)
 
     def quit(self, user):
         """ Выход пользователя с сервера """
         self.users.remove(user)
-        user.sock.send(bytes(commands.Response(200)))
-        user.sock.close()
+        user.send(bytes(commands.Response(200)))
+        user.close()
 
     def presence(self, command, user):
         """ Подтверждение нахождения пользователя на сервере """
-        user.sock.send(bytes(commands.Response(200)))
+        user.send(bytes(commands.Response(200)))
 
 
 class Server(object):
@@ -53,7 +53,6 @@ class Server(object):
             self.accept_users()
 
             read_sockets, write_sockets, exc_sockets = select.select(self.users, self.users, self.users, 0)
-            print(read_sockets, write_sockets, exc_sockets)
 
             for sock in read_sockets:
                 self.handle_read_socket(sock)
@@ -69,6 +68,8 @@ class Server(object):
         """
         try:
             user, _ = self.socket.accept()
+            user.setblocking(False)
+            self.message_queue[user] = queue.Queue()
             self.users.append(user)
         except socket.timeout:
             pass
@@ -81,9 +82,18 @@ class Server(object):
         if not raw_data:
             sock.close()
             self.users.remove(sock)
+            del self.message_queue[sock]
+        else:
+            # Обработать сообщение и добавить ответ
+            self.message_queue[sock].put(raw_data)
 
     def handle_write_socket(self, sock):
         """ Обработка сокетов на запись """
+        try:
+            message = self.message_queue[sock].get_nowait()
+            sock.send(message)
+        except queue.Empty:
+            pass
 
     def handle_exception_socket(self, sock):
         """ Обработка сокетов вызывавших исключение """
@@ -96,7 +106,7 @@ class Server(object):
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.bind((ip, port))
         sock.listen(5)
-        sock.settimeout(0.2)
+        sock.setblocking(False)
         return sock
 
 
