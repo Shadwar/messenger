@@ -45,24 +45,25 @@ class ServerCommandHandler(object):
         self.users = users
         self.chats = chats
 
-    def handle(self, command):
+    def handle(self, user, command):
         """ Обработка поступившей команды. """
         if command['action'] == 'authenticate':
-            return self.authenticate(command)
+            return self.authenticate(user, command)
         elif command['action'] == 'quit':
-            return self.quit()
+            return self.quit(user)
         elif command['action'] == 'presence':
-            return self.presence(command)
+            return self.presence(user, command)
 
-    def authenticate(self, command):
+    def authenticate(self, user, command):
         """ Аутентификация пользователя """
         return bytes(commands.Response(202))
 
-    def quit(self):
+    def quit(self, user):
         """ Выход пользователя с сервера """
+        del self.users[user.sock]
         return bytes(commands.Response(200))
 
-    def presence(self, command):
+    def presence(self, user, command):
         """ Подтверждение нахождения пользователя на сервере """
         return bytes(commands.Response(200))
 
@@ -83,9 +84,7 @@ class Server(object):
             self.accept_users()
 
             user_sockets = [sock for sock in self.users.keys()]
-
             read_sockets, write_sockets, _ = select.select(user_sockets, user_sockets, [], 0)
-            print(self.users)
 
             for sock in read_sockets:
                 self.recv_from_user(self.users[sock])
@@ -117,8 +116,9 @@ class Server(object):
                 chat.remove(user)
         else:
             command = json.loads(raw_data.decode())
-            response = self.handler.handle(command)
-            user.send_message(response)
+            response = self.handler.handle(user, command)
+            if response:
+                user.send_message(response)
 
     def send_to_user(self, user):
         """ Обработка сокетов на запись """
