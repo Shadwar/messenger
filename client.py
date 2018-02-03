@@ -36,8 +36,8 @@ class Client(object):
                 presence_command = commands.PresenceCommand('ivan', "I'm here")
                 self.socket.send(bytes(presence_command))
                 raw_data = self.socket.recv(1024)
+                print(raw_data)
                 command = json.loads(raw_data.decode())
-                print(command)
                 if 'action' in command:
                     self.handler.handle(command)
 

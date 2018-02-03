@@ -2,38 +2,69 @@ import socket
 import sys
 import select
 import queue
-
+import json
 import commands
+import log_config
+from lib import log
+
+
+class User(object):
+    """ Пользователь """
+    def __init__(self, sock):
+        self.sock = sock
+        self.recv_messages = queue.Queue()
+        self.send_messages = queue.Queue()
+
+    def send_message(self, message):
+        self.send_messages.put(message)
+
+
+class Chat(object):
+    """ Чат """
+    def __init__(self, title):
+        self.title = title
+        self.users = []
+
+    def connect(self, user):
+        """ Добавление нового пользователя в чат """
+        self.users.append(user)
+
+    def remove(self, user):
+        """ Убирает пользователя из чата """
+        self.users.remove(user)
+
+    def send_message(self, message):
+        """ Отправка сообщения в чат всем пользователям """
+        for u in self.users:
+            u.send_message(message)
 
 
 class ServerCommandHandler(object):
     """ Серверный обработчик команд, поступающих от клиента """
-    def __init__(self, users):
+    def __init__(self, users, chats):
         self.users = users
+        self.chats = chats
 
-    def handle(self, command, user):
+    def handle(self, command):
         """ Обработка поступившей команды. """
         if command['action'] == 'authenticate':
-            self.authenticate(command, user)
+            return self.authenticate(command)
         elif command['action'] == 'quit':
-            self.quit(user)
+            return self.quit()
         elif command['action'] == 'presence':
-            self.presence(command, user)
+            return self.presence(command)
 
-    def authenticate(self, command, user):
+    def authenticate(self, command):
         """ Аутентификация пользователя """
-        result = bytes(commands.Response(202))
-        user.send(result)
+        return bytes(commands.Response(202))
 
-    def quit(self, user):
+    def quit(self):
         """ Выход пользователя с сервера """
-        self.users.remove(user)
-        user.send(bytes(commands.Response(200)))
-        user.close()
+        return bytes(commands.Response(200))
 
-    def presence(self, command, user):
+    def presence(self, command):
         """ Подтверждение нахождения пользователя на сервере """
-        user.send(bytes(commands.Response(200)))
+        return bytes(commands.Response(200))
 
 
 class Server(object):
@@ -41,63 +72,62 @@ class Server(object):
     """
     def __init__(self, ip, port):
         self.socket = Server.create_socket(ip, port)
-        self.users = []
-        self.message_queue = {}
-        self.handler = ServerCommandHandler(self.users)
+        self.users = {}
+        self.chats = []
+        self.handler = ServerCommandHandler(self.users, self.chats)
 
     def run(self):
         """ Запуск сервера
         """
-
         while True:
             self.accept_users()
 
-            read_sockets, write_sockets, exc_sockets = select.select(self.users, self.users, self.users, 0)
+            user_sockets = [sock for sock in self.users.keys()]
+
+            read_sockets, write_sockets, _ = select.select(user_sockets, user_sockets, [], 0)
+            print(self.users)
 
             for sock in read_sockets:
-                self.handle_read_socket(sock)
+                self.recv_from_user(self.users[sock])
 
             for sock in write_sockets:
-                self.handle_write_socket(sock)
-
-            for sock in exc_sockets:
-                self.handle_exception_socket(sock)
+                if sock in self.users:
+                    self.send_to_user(self.users[sock])
 
     def accept_users(self):
         """ Подключение нового пользователя к серверу
         """
         try:
-            user, _ = self.socket.accept()
-            user.setblocking(False)
-            self.message_queue[user] = queue.Queue()
-            self.users.append(user)
-        except socket.timeout:
+            sock, _ = self.socket.accept()
+            sock.setblocking(False)
+            user = User(sock)
+            self.users[sock] = user
+        except BlockingIOError:
             pass
 
-    def handle_read_socket(self, sock):
+    def recv_from_user(self, user):
         """ Обработка сокетов на чтение """
-        raw_data = sock.recv(1024)
+        raw_data = user.sock.recv(1024)
 
         # Если возвращено 0 байт, значит пользователь отключился
         if not raw_data:
-            sock.close()
-            self.users.remove(sock)
-            del self.message_queue[sock]
+            del self.users[user.sock]
+            user.sock.close()
+            for chat in self.chats:
+                chat.remove(user)
         else:
-            # Обработать сообщение и добавить ответ
-            self.message_queue[sock].put(raw_data)
+            command = json.loads(raw_data.decode())
+            response = self.handler.handle(command)
+            user.send_message(response)
 
-    def handle_write_socket(self, sock):
+    def send_to_user(self, user):
         """ Обработка сокетов на запись """
         try:
-            message = self.message_queue[sock].get_nowait()
-            sock.send(message)
+            message = user.send_messages.get_nowait()
         except queue.Empty:
             pass
-
-    def handle_exception_socket(self, sock):
-        """ Обработка сокетов вызывавших исключение """
-        pass
+        else:
+            user.sock.send(message)
 
     @classmethod
     def create_socket(cls, ip, port):
