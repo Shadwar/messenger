@@ -1,16 +1,13 @@
 import socket
-import json
 import sys
-from collections import namedtuple
+import select
+import queue
 
 import commands
 
 
-User = namedtuple('User', 'sock addr')
-
-
 class ServerCommandHandler(object):
-    """ Серверный обработчик команд, поступаемых от клиента """
+    """ Серверный обработчик команд, поступающих от клиента """
     def __init__(self, users):
         self.users = users
 
@@ -43,29 +40,64 @@ class Server(object):
     """ Сервер мессенджера
     """
     def __init__(self, ip, port):
-        self.ip = ip
-        self.port = port
+        self.socket = Server.create_socket(ip, port)
         self.users = []
-        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.message_queue = {}
         self.handler = ServerCommandHandler(self.users)
 
     def run(self):
         """ Запуск сервера
         """
-        self.socket.bind((self.ip, self.port))
-        self.socket.listen(5)
-        self.socket.settimeout(5)
-
-        # TODO: Сделать обработку отдельных клиентов по тредам
-        user = User(*self.socket.accept())
-        self.users.append(user)
 
         while True:
-            raw_data = user.sock.recv(1024)
-            command = json.loads(raw_data.decode())
-            print(command)
-            if 'action' in command:
-                self.handler.handle(command, user)
+            self.accept_users()
+
+            read_sockets, write_sockets, exc_sockets = select.select(self.users, self.users, self.users, 0)
+            print(read_sockets, write_sockets, exc_sockets)
+
+            for sock in read_sockets:
+                self.handle_read_socket(sock)
+
+            for sock in write_sockets:
+                self.handle_write_socket(sock)
+
+            for sock in exc_sockets:
+                self.handle_exception_socket(sock)
+
+    def accept_users(self):
+        """ Подключение нового пользователя к серверу
+        """
+        try:
+            user, _ = self.socket.accept()
+            self.users.append(user)
+        except socket.timeout:
+            pass
+
+    def handle_read_socket(self, sock):
+        """ Обработка сокетов на чтение """
+        raw_data = sock.recv(1024)
+
+        # Если возвращено 0 байт, значит пользователь отключился
+        if not raw_data:
+            sock.close()
+            self.users.remove(sock)
+
+    def handle_write_socket(self, sock):
+        """ Обработка сокетов на запись """
+
+    def handle_exception_socket(self, sock):
+        """ Обработка сокетов вызывавших исключение """
+        pass
+
+    @classmethod
+    def create_socket(cls, ip, port):
+        """ Создание сокета сервера
+        """
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.bind((ip, port))
+        sock.listen(5)
+        sock.settimeout(0.2)
+        return sock
 
 
 if __name__ == '__main__':
