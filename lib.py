@@ -9,7 +9,7 @@ def log(func):
     @wraps(func)
     def wrapper(*args, **kwargs):
         print(dir(func))
-        logger = logging.getLogger('server')
+        logger = logging.getLogger('server_decorated')
 
         all_args = []
         for arg in args:
@@ -19,7 +19,7 @@ def log(func):
 
         params = {
             'asctime': time.ctime(),
-            'levelname': logging.INFO,
+            'levelname': 'INFO',
             'modulename': func.__module__,
             'funcname': func.__name__,
             'args': ','.join(all_args)

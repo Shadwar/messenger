@@ -5,8 +5,10 @@ import queue
 import json
 import commands
 import log_config
+import logging
 from lib import log
 
+logger = logging.getLogger('server')
 
 class User(object):
     """ Пользователь """
@@ -96,6 +98,7 @@ class ServerCommandHandler(object):
         if title in [chat.title for chat in self.chats]:
             user.send_message(bytes(commands.ErrorResponse(400, 'Чат с таким названием уже существует')))
         else:
+            logger.info('Создан новый чат: %s', title)
             chat = Chat(title)
             chat.users.append(user)
             self.chats.append(chat)
@@ -108,6 +111,7 @@ class ServerCommandHandler(object):
             if title == chat.title:
                 if user not in chat.users:
                     chat.users.append(user)
+                logger.info('К чату %s присоединился пользователь %s', title, user.name)
                 user.send_message(bytes(commands.Response(200)))
                 return
         user.send_message(bytes(commands.ErrorResponse(404, 'Чат с таким названием не найден')))
@@ -117,6 +121,7 @@ class ServerCommandHandler(object):
         title = command['room']
         for chat in self.chats:
             if title == chat.title and user in chat.users:
+                logger.info('Пользователь %s покинул чат %s', user.name, title)
                 chat.users.remove(user)
                 user.send_message(bytes(commands.Response(200)))
                 return
@@ -128,11 +133,13 @@ class ServerCommandHandler(object):
         if name[0] == '#':
             for chat in self.chats:
                 if chat.title == name:
+                    logger.info('Пользователь %s отправил сообщение в чат %s', user.name, name)
                     chat.send_message(bytes(json.dumps(command).encode()))
                     return
         else:
             for user in self.users.values():
                 if user.name == name:
+                    logger.info('Пользователь %s отправил сообщение пользователю %s', user.name, name)
                     user.send_message(bytes(json.dumps(command).encode()))
                     return
         user.send_message(bytes(commands.ErrorResponse(404, 'Получатель не найден')))
@@ -150,6 +157,7 @@ class Server(object):
     def run(self):
         """ Запуск сервера
         """
+        logger.info('Запуск сервера')
         while True:
             self.accept_users()
 
