@@ -14,6 +14,7 @@ class User(object):
         self.sock = sock
         self.recv_messages = queue.Queue()
         self.send_messages = queue.Queue()
+        self.name = None
 
     def send_message(self, message):
         self.send_messages.put(message)
@@ -63,19 +64,60 @@ class ServerCommandHandler(object):
             self.quit(user)
         elif command['action'] == 'presence':
             self.presence(user, command)
+        elif command['action'] == 'create':
+            self.create_chat(user, command)
+        elif command['action'] == 'join':
+            self.join_chat(user, command)
+        elif command['action'] == 'leave':
+            self.leave_chat(user, command)
 
     def authenticate(self, user, command):
         """ Аутентификация пользователя """
+        user.name = command['user']['account_name']
         user.send_message(bytes(commands.Response(202)))
 
     def quit(self, user):
         """ Выход пользователя с сервера """
         del self.users[user.sock]
+        for chat in self.chats:
+            if user in chat.users:
+                chat.users.remove(user)
         user.send_message(bytes(commands.Response(200)))
 
     def presence(self, user, command):
         """ Подтверждение нахождения пользователя на сервере """
         user.send_message(bytes(commands.Response(200)))
+
+    def create_chat(self, user, command):
+        """ Создание нового чата """
+        title = command['room']
+        if title in [chat.title for chat in self.chats]:
+            user.send_message(bytes(commands.ErrorResponse(400, 'Чат с таким названием уже существует')))
+        else:
+            chat = Chat(title)
+            chat.users.append(user)
+            self.chats.append(chat)
+            user.send_message(bytes(commands.Response(200)))
+
+    def join_chat(self, user, command):
+        """ Присоединение к существующему чату """
+        title = command['room']
+        for chat in self.chats:
+            if title == chat.title:
+                if user not in chat.users:
+                    chat.users.append(user)
+                user.send_message(bytes(commands.Response(200)))
+        user.send_message(bytes(commands.ErrorResponse(404, 'Чат с таким названием не найден')))
+
+    def leave_chat(self, user, command):
+        """ Покинуть чат """
+        title = command['room']
+        for chat in self.chats:
+            if title == chat.title and user in chat.users:
+                chat.users.remove(user)
+                user.send_message(bytes(commands.Response(200)))
+        user.send_message(bytes(commands.ErrorResponse(400, 'Пользователь не находится в указанном чате')))
+
 
 
 class Server(object):

@@ -249,3 +249,25 @@ class ChatLeaveCommand(Command):
             'room': self.room
         }
         return json.dumps(command)
+
+
+class ChatCreateCommand(Command):
+    """ Команда для создания нового чата
+    {
+        "action": "create",
+        "time": <unix timestamp>,
+        "room": "#room_name"
+    }
+    """
+    action = 'create'
+
+    def __init__(self, room_name):
+        self.room_name = room_name
+
+    def __str__(self):
+        command = {
+            'action': self.__class__.action,
+            'time': int(time.time()),
+            'room': self.room_name
+        }
+        return json.dumps(command)
