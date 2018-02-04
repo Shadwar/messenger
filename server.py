@@ -18,6 +18,9 @@ class User(object):
     def send_message(self, message):
         self.send_messages.put(message)
 
+    def recv_message(self, message):
+        self.recv_messages.put(message)
+
 
 class Chat(object):
     """ Чат """
@@ -45,27 +48,34 @@ class ServerCommandHandler(object):
         self.users = users
         self.chats = chats
 
+    def execute(self):
+        """ Производит обработку входящих команд от всех пользователей"""
+        for user in list(self.users.values()):
+            while not user.recv_messages.empty():
+                command = user.recv_messages.get_nowait()
+                self.handle(user, command)
+
     def handle(self, user, command):
         """ Обработка поступившей команды. """
         if command['action'] == 'authenticate':
-            return self.authenticate(user, command)
+            self.authenticate(user, command)
         elif command['action'] == 'quit':
-            return self.quit(user)
+            self.quit(user)
         elif command['action'] == 'presence':
-            return self.presence(user, command)
+            self.presence(user, command)
 
     def authenticate(self, user, command):
         """ Аутентификация пользователя """
-        return bytes(commands.Response(202))
+        user.send_message(bytes(commands.Response(202)))
 
     def quit(self, user):
         """ Выход пользователя с сервера """
         del self.users[user.sock]
-        return bytes(commands.Response(200))
+        user.send_message(bytes(commands.Response(200)))
 
     def presence(self, user, command):
         """ Подтверждение нахождения пользователя на сервере """
-        return bytes(commands.Response(200))
+        user.send_message(bytes(commands.Response(200)))
 
 
 class Server(object):
@@ -93,6 +103,8 @@ class Server(object):
                 if sock in self.users:
                     self.send_to_user(self.users[sock])
 
+            self.handler.execute()
+
     def accept_users(self):
         """ Подключение нового пользователя к серверу
         """
@@ -116,9 +128,7 @@ class Server(object):
                 chat.remove(user)
         else:
             command = json.loads(raw_data.decode())
-            response = self.handler.handle(user, command)
-            if response:
-                user.send_message(response)
+            user.recv_message(command)
 
     def send_to_user(self, user):
         """ Обработка сокетов на запись """

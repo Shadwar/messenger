@@ -1,11 +1,23 @@
 import unittest
+from unittest import TestCase
 from unittest.mock import Mock, patch
 import json
 import server
 import commands
 
 
-class TestServer(unittest.TestCase):
+class TestServer(TestCase):
+    def setUp(self):
+        # Создание мока сервера
+        serv = Mock()
+        serv.users = {}
+        serv.chats = []
+        # Создание мока пользователя
+        self.serv = serv
+        user_sock = Mock()
+        user = server.User(user_sock)
+        self.user = user
+
     def test_accept_new_user(self):
         """ Сервер добавляет нового клиента """
         with patch('socket.socket') as mock_socket:
@@ -32,8 +44,33 @@ class TestServer(unittest.TestCase):
             self.assertTrue(sock.bind.listen)
             self.assertTrue(sock.bind.settimeout)
 
+    def test_send_to_user(self):
+        """ Сервер должен отправлять сообщение пользователю из его очереди сообщений на отправку """
+        with patch('socket.socket') as mock_socket:
+            mock_socket.return_value.bind.return_value = None
+            mock_socket.return_value.listen.return_value = None
+            mock_socket.return_value.setblocking.return_value = None
+            mock_socket.return_value.accept.return_value = (mock_socket, None)
+            serv = server.Server('127.0.0.1', 7777)
+            user = server.User(Mock())
+            serv.users[user.sock] = user
+            user.send_messages.put(bytes('message'.encode()))
+            serv.send_to_user(user)
+            self.assertTrue(user.sock.send.callsed)
+            self.assertEqual(user.sock.send.call_args[0][0], b'message')
 
-class TestHandlers(unittest.TestCase):
+    def test_recv_from_user(self):
+        """ Сервер получает сообщение от пользователя и добавляет его в очередь сообщений пользователя."""
+        self.serv.recv_from_user = server.Server.recv_from_user
+        self.user.sock.recv.return_value = b'{"message":"1"}'
+
+        self.serv.users[self.user.sock] = self.user
+        self.serv.recv_from_user(self.serv, self.user)
+
+        self.assertEqual({'message': '1'}, self.user.recv_messages.get_nowait())
+
+
+class TestHandlers(TestCase):
     def setUp(self):
         self.users = {}
         self.chats = []
