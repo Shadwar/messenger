@@ -154,3 +154,42 @@ class TestHandlers(TestCase):
         self.handler.handle(self.user, json.loads(str(command)))
         message = json.loads(self.user.send_messages.get_nowait().decode())
         self.assertTrue(message['response'] == '400')
+
+    def test_send_message_to_user(self):
+        """ Отправка сообщения пользователю передает его указанному получателю """
+        self.user.name = 'name1'
+        user2_sock = Mock()
+        user2_sock.send.return_value = None
+        user2 = server.User(user2_sock)
+        user2.name = 'name2'
+        self.users[user2_sock] = user2
+
+        command = commands.MessageCommand(self.user.name, user2.name, 'Message')
+        self.handler.handle(self.user, json.loads(str(command)))
+        message = json.loads(user2.send_messages.get_nowait().decode())
+        self.assertTrue(message['message'] == 'Message')
+
+    def test_send_message_to_chat(self):
+        self.user.name = 'name1'
+        user2_sock = Mock()
+        user2_sock.send.return_value = None
+        user2 = server.User(user2_sock)
+        user2.name = 'name2'
+        self.users[user2_sock] = user2
+
+        command = commands.ChatCreateCommand('#test_room')
+        self.handler.handle(self.user, json.loads(str(command)))
+        message = self.user.send_messages.get_nowait()
+
+        command = commands.ChatJoinCommand('#test_room')
+        self.handler.handle(user2, json.loads(str(command)))
+        message = user2.send_messages.get_nowait().decode()
+
+        command = commands.MessageCommand(self.user.name, '#test_room', 'Message')
+        self.handler.handle(self.user, json.loads(str(command)))
+
+        message1 = json.loads(self.user.send_messages.get_nowait().decode())
+        message2 = json.loads(user2.send_messages.get_nowait().decode())
+
+        self.assertTrue(message1['message'] == 'Message')
+        self.assertTrue(message2['message'] == 'Message')

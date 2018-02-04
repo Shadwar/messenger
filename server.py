@@ -70,6 +70,8 @@ class ServerCommandHandler(object):
             self.join_chat(user, command)
         elif command['action'] == 'leave':
             self.leave_chat(user, command)
+        elif command['action'] == 'msg':
+            self.send_message(user, command)
 
     def authenticate(self, user, command):
         """ Аутентификация пользователя """
@@ -107,6 +109,7 @@ class ServerCommandHandler(object):
                 if user not in chat.users:
                     chat.users.append(user)
                 user.send_message(bytes(commands.Response(200)))
+                return
         user.send_message(bytes(commands.ErrorResponse(404, 'Чат с таким названием не найден')))
 
     def leave_chat(self, user, command):
@@ -116,8 +119,23 @@ class ServerCommandHandler(object):
             if title == chat.title and user in chat.users:
                 chat.users.remove(user)
                 user.send_message(bytes(commands.Response(200)))
+                return
         user.send_message(bytes(commands.ErrorResponse(400, 'Пользователь не находится в указанном чате')))
 
+    def send_message(self, user, command):
+        """ Отправка сообщения в указанный чат или пользователю """
+        name = command['to']
+        if name[0] == '#':
+            for chat in self.chats:
+                if chat.title == name:
+                    chat.send_message(bytes(json.dumps(command).encode()))
+                    return
+        else:
+            for user in self.users.values():
+                if user.name == name:
+                    user.send_message(bytes(json.dumps(command).encode()))
+                    return
+        user.send_message(bytes(commands.ErrorResponse(404, 'Получатель не найден')))
 
 
 class Server(object):
