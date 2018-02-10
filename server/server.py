@@ -4,45 +4,10 @@ import select
 import queue
 import json
 import commands
-import log_config
 import logging
-from lib import log
+from server.chat import Chat
 
 logger = logging.getLogger('server')
-
-class User(object):
-    """ Пользователь """
-    def __init__(self, sock):
-        self.sock = sock
-        self.recv_messages = queue.Queue()
-        self.send_messages = queue.Queue()
-        self.name = None
-
-    def send_message(self, message):
-        self.send_messages.put(message)
-
-    def recv_message(self, message):
-        self.recv_messages.put(message)
-
-
-class Chat(object):
-    """ Чат """
-    def __init__(self, title):
-        self.title = title
-        self.users = []
-
-    def connect(self, user):
-        """ Добавление нового пользователя в чат """
-        self.users.append(user)
-
-    def remove(self, user):
-        """ Убирает пользователя из чата """
-        self.users.remove(user)
-
-    def send_message(self, message):
-        """ Отправка сообщения в чат всем пользователям """
-        for u in self.users:
-            u.send_message(message)
 
 
 class ServerCommandHandler(object):
