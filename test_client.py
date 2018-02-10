@@ -1,8 +1,8 @@
 import unittest
 from unittest.mock import Mock
 import json
-import commands
-import client
+import shared.commands as commands
+import client.client as client
 
 
 class TestClient(unittest.TestCase):

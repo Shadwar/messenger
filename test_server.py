@@ -3,7 +3,9 @@ from unittest import TestCase
 from unittest.mock import Mock, patch
 import json
 import server
-import commands
+from server.user import User
+from server.server import Server, ServerCommandHandler
+import shared.commands as commands
 
 
 class TestServer(TestCase):
@@ -15,7 +17,7 @@ class TestServer(TestCase):
         # Создание мока пользователя
         self.serv = serv
         user_sock = Mock()
-        user = server.User(user_sock)
+        user = User(user_sock)
         self.user = user
 
     def test_accept_new_user(self):
@@ -27,7 +29,7 @@ class TestServer(TestCase):
             mock_socket.return_value.setblocking.return_value = None
             mock_socket.return_value.accept.return_value = (mock_socket, None)
 
-            serv = server.Server('127.0.0.1', 7777)
+            serv = Server('127.0.0.1', 7777)
             self.assertEqual(len(serv.users), 0)
             serv.accept_users()
             self.assertEqual(len(serv.users), 1)
@@ -38,7 +40,7 @@ class TestServer(TestCase):
             mock_socket.return_value.bind.return_value = None
             mock_socket.return_value.listen.return_value = None
             mock_socket.return_value.settimeout.return_value = None
-            sock = server.Server.create_socket('127.0.0.1', 7777)
+            sock = Server.create_socket('127.0.0.1', 7777)
             self.assertTrue(mock_socket.called)
             self.assertTrue(sock.bind.called)
             self.assertTrue(sock.bind.listen)
@@ -51,8 +53,8 @@ class TestServer(TestCase):
             mock_socket.return_value.listen.return_value = None
             mock_socket.return_value.setblocking.return_value = None
             mock_socket.return_value.accept.return_value = (mock_socket, None)
-            serv = server.Server('127.0.0.1', 7777)
-            user = server.User(Mock())
+            serv = Server('127.0.0.1', 7777)
+            user = User(Mock())
             serv.users[user.sock] = user
             user.send_messages.put(bytes('message'.encode()))
             serv.send_to_user(user)
@@ -61,7 +63,7 @@ class TestServer(TestCase):
 
     def test_recv_from_user(self):
         """ Сервер получает сообщение от пользователя и добавляет его в очередь сообщений пользователя."""
-        self.serv.recv_from_user = server.Server.recv_from_user
+        self.serv.recv_from_user = Server.recv_from_user
         self.user.sock.recv.return_value = b'{"message":"1"}'
 
         self.serv.users[self.user.sock] = self.user
@@ -74,10 +76,10 @@ class TestHandlers(TestCase):
     def setUp(self):
         self.users = {}
         self.chats = []
-        self.handler = server.ServerCommandHandler(self.users, self.chats)
+        self.handler = ServerCommandHandler(self.users, self.chats)
         self.user_sock = Mock()
         self.user_sock.send.return_value = None
-        self.user = server.User(self.user_sock)
+        self.user = User(self.user_sock)
         self.users[self.user_sock] = self.user
 
     def test_authenticate_returns_202(self):
@@ -160,7 +162,7 @@ class TestHandlers(TestCase):
         self.user.name = 'name1'
         user2_sock = Mock()
         user2_sock.send.return_value = None
-        user2 = server.User(user2_sock)
+        user2 = User(user2_sock)
         user2.name = 'name2'
         self.users[user2_sock] = user2
 
@@ -173,7 +175,7 @@ class TestHandlers(TestCase):
         self.user.name = 'name1'
         user2_sock = Mock()
         user2_sock.send.return_value = None
-        user2 = server.User(user2_sock)
+        user2 = User(user2_sock)
         user2.name = 'name2'
         self.users[user2_sock] = user2
 

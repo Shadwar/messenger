@@ -1,7 +1,7 @@
 import socket
 import json
 import sys
-import commands
+import shared.commands as commands
 
 
 class ClientCommandHandler(object):

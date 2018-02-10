@@ -3,9 +3,11 @@ import sys
 import select
 import queue
 import json
-import commands
+import shared.commands as commands
 import logging
 from server.chat import Chat
+from server.user import User
+
 
 logger = logging.getLogger('server')
 
