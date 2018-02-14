@@ -5,6 +5,7 @@ import queue
 import json
 import shared.commands as commands
 import logging
+from server.file_storage import FileStorage
 from server.chat import Chat
 from server.user import User
 
@@ -17,6 +18,7 @@ class ServerCommandHandler(object):
     def __init__(self, users, chats):
         self.users = users
         self.chats = chats
+        self.storage = FileStorage('server_messages.csv')
 
     def execute(self):
         """ Производит обработку входящих команд от всех пользователей"""
@@ -97,6 +99,7 @@ class ServerCommandHandler(object):
     def send_message(self, user, command):
         """ Отправка сообщения в указанный чат или пользователю """
         name = command['to']
+        self.storage.add('messages', command['time'], command)
         if name[0] == '#':
             for chat in self.chats:
                 if chat.title == name:
@@ -183,23 +186,3 @@ class Server(object):
         sock.listen(5)
         sock.setblocking(False)
         return sock
-
-
-if __name__ == '__main__':
-    args = sys.argv
-    # Получаем ip и port из коммандной строки,
-    # показывать ошибку, если ip не указан
-    if len(args) not in (3, 5):
-        print("Ошибка запуска сервера:")
-        print("server.py -a addr [-p port]")
-        sys.exit()
-
-    port = 7777
-    for i, s in enumerate(args):
-        if s == '-a':
-            addr = args[i+1]
-        elif s == '-p':
-            port = int(args[i+1])
-
-    server = Server(addr, port)
-    server.run()
