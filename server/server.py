@@ -3,11 +3,12 @@ import sys
 import select
 import queue
 import json
-import shared.commands as commands
 import logging
 from server.file_storage import FileStorage
 from server.chat import Chat
 from server.user import User
+from shared.messages import *
+from shared.responses import *
 
 
 logger = logging.getLogger('server')
@@ -47,7 +48,7 @@ class ServerCommandHandler(object):
     def authenticate(self, user, command):
         """ Аутентификация пользователя """
         user.name = command['user']['account_name']
-        user.send_message(bytes(commands.Response(202)))
+        user.send_message(bytes(Response(202)))
 
     def quit(self, user):
         """ Выход пользователя с сервера """
@@ -55,23 +56,23 @@ class ServerCommandHandler(object):
         for chat in self.chats:
             if user in chat.users:
                 chat.users.remove(user)
-        user.send_message(bytes(commands.Response(200)))
+        user.send_message(bytes(Response(200)))
 
     def presence(self, user, command):
         """ Подтверждение нахождения пользователя на сервере """
-        user.send_message(bytes(commands.Response(200)))
+        user.send_message(bytes(Response(200)))
 
     def create_chat(self, user, command):
         """ Создание нового чата """
         title = command['room']
         if title in [chat.title for chat in self.chats]:
-            user.send_message(bytes(commands.ErrorResponse(400, 'Чат с таким названием уже существует')))
+            user.send_message(bytes(ErrorResponse(400, 'Чат с таким названием уже существует')))
         else:
             logger.info('Создан новый чат: %s', title)
             chat = Chat(title)
             chat.users.append(user)
             self.chats.append(chat)
-            user.send_message(bytes(commands.Response(200)))
+            user.send_message(bytes(Response(200)))
 
     def join_chat(self, user, command):
         """ Присоединение к существующему чату """
@@ -81,9 +82,9 @@ class ServerCommandHandler(object):
                 if user not in chat.users:
                     chat.users.append(user)
                 logger.info('К чату %s присоединился пользователь %s', title, user.name)
-                user.send_message(bytes(commands.Response(200)))
+                user.send_message(bytes(Response(200)))
                 return
-        user.send_message(bytes(commands.ErrorResponse(404, 'Чат с таким названием не найден')))
+        user.send_message(bytes(ErrorResponse(404, 'Чат с таким названием не найден')))
 
     def leave_chat(self, user, command):
         """ Покинуть чат """
@@ -92,9 +93,9 @@ class ServerCommandHandler(object):
             if title == chat.title and user in chat.users:
                 logger.info('Пользователь %s покинул чат %s', user.name, title)
                 chat.users.remove(user)
-                user.send_message(bytes(commands.Response(200)))
+                user.send_message(bytes(Response(200)))
                 return
-        user.send_message(bytes(commands.ErrorResponse(400, 'Пользователь не находится в указанном чате')))
+        user.send_message(bytes(ErrorResponse(400, 'Пользователь не находится в указанном чате')))
 
     def send_message(self, user, command):
         """ Отправка сообщения в указанный чат или пользователю """
@@ -112,7 +113,7 @@ class ServerCommandHandler(object):
                     logger.info('Пользователь %s отправил сообщение пользователю %s', user.name, name)
                     user.send_message(bytes(json.dumps(command).encode()))
                     return
-        user.send_message(bytes(commands.ErrorResponse(404, 'Получатель не найден')))
+        user.send_message(bytes(ErrorResponse(404, 'Получатель не найден')))
 
 
 class Server(object):

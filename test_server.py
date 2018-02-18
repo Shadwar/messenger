@@ -5,7 +5,8 @@ import json
 import server
 from server.user import User
 from server.server import Server, ServerCommandHandler
-import shared.commands as commands
+from shared.responses import *
+from shared.messages import *
 
 
 class TestServer(TestCase):
@@ -84,78 +85,78 @@ class TestHandlers(TestCase):
 
     def test_authenticate_returns_202(self):
         """ Обработчик аутентификации возвращает респонс с 202 кодом  """
-        command = commands.AuthenticateCommand('ivan', 'vlado12')
-        expected = json.dumps({"response": "202"}).encode()
-        self.handler.handle(self.user, json.loads(str(command)))
+        command = AuthenticateMessage('ivan', 'vlado12')
+        expected = json.dumps({"response": 202}).encode()
+        self.handler.handle(self.user, command.data)
         message = self.user.send_messages.get_nowait()
         self.assertTrue(message == expected)
 
     def test_quit_return_200(self):
         """ Обработчик выхода возвращает респонс с 200 кодом - выход успешен """
-        command = commands.QuitCommand()
-        expected = json.dumps({"response": "200"}).encode()
-        self.handler.handle(self.user, json.loads(str(command)))
+        command = QuitMessage()
+        expected = json.dumps({"response": 200}).encode()
+        self.handler.handle(self.user, command.data)
         message = self.user.send_messages.get_nowait()
         self.assertTrue(message == expected)
 
     def test_presence_return_200(self):
         """ Сообщение от пользователя о его нахождении на сервере - должен вернуться код 200 - успешно """
-        command = commands.PresenceCommand('ivan', "I'm here")
-        expected = json.dumps({"response": "200"}).encode()
-        self.handler.handle(self.user, json.loads(str(command)))
+        command = PresenceMessage('ivan', "I'm here")
+        expected = json.dumps({"response": 200}).encode()
+        self.handler.handle(self.user, command.data)
         message = self.user.send_messages.get_nowait()
         self.assertTrue(message == expected)
 
     def test_create_chat_return_200_if_not_exists(self):
         """ При создании нового чата должен вернуться 200 ответ """
-        command = commands.ChatCreateCommand('#test_room')
-        expected = json.dumps({"response": "200"}).encode()
-        self.handler.handle(self.user, json.loads(str(command)))
+        command = ChatCreateMessage('#test_room')
+        expected = json.dumps({"response": 200}).encode()
+        self.handler.handle(self.user, command.data)
         message = self.user.send_messages.get_nowait()
         self.assertTrue(message == expected)
 
     def test_create_chat_return_400_if_already_exists(self):
         """ Если такой чат уже существует - вернуть 400 ошибку """
-        command = commands.ChatCreateCommand('#test_room')
-        self.handler.handle(self.user, json.loads(str(command)))
+        command = ChatCreateMessage('#test_room')
+        self.handler.handle(self.user, command.data)
         message = self.user.send_messages.get_nowait()
-        self.handler.handle(self.user, json.loads(str(command)))
+        self.handler.handle(self.user, command.data)
         second_message = json.loads(self.user.send_messages.get_nowait().decode())
-        self.assertTrue(second_message['response'] == '400')
+        self.assertTrue(second_message['response'] == 400)
 
     def test_join_not_exists_chat_return_404(self):
         """ При попытке подключения к несуществующему чату, выдать ошибку 404 """
-        command = commands.ChatJoinCommand('#test_room')
-        self.handler.handle(self.user, json.loads(str(command)))
+        command = ChatJoinMessage('#test_room')
+        self.handler.handle(self.user, command.data)
         message = json.loads(self.user.send_messages.get_nowait().decode())
-        self.assertTrue(message['response'] == '404')
+        self.assertTrue(message['response'] == 404)
 
     def test_join_to_exists_chat_return_200(self):
         """ При подключении к существующему чату выдает ответ 200 """
-        command = commands.ChatCreateCommand('#test_room')
-        self.handler.handle(self.user, json.loads(str(command)))
+        command = ChatCreateMessage('#test_room')
+        self.handler.handle(self.user, command.data)
         message = self.user.send_messages.get_nowait()
-        command = commands.ChatJoinCommand('#test_room')
-        self.handler.handle(self.user, json.loads(str(command)))
+        command = ChatJoinMessage('#test_room')
+        self.handler.handle(self.user, command.data)
         message = json.loads(self.user.send_messages.get_nowait().decode())
-        self.assertTrue(message['response'] == '200')
+        self.assertTrue(message['response'] == 200)
 
     def test_leave_chat_return_200(self):
         """ При выходе из существующего чата возвращается ответ 200"""
-        command = commands.ChatCreateCommand('#test_room')
-        self.handler.handle(self.user, json.loads(str(command)))
+        command = ChatCreateMessage('#test_room')
+        self.handler.handle(self.user, command.data)
         message = self.user.send_messages.get_nowait()
-        command = commands.ChatLeaveCommand('#test_room')
-        self.handler.handle(self.user, json.loads(str(command)))
+        command = ChatLeaveMessage('#test_room')
+        self.handler.handle(self.user, command.data)
         message = json.loads(self.user.send_messages.get_nowait().decode())
-        self.assertTrue(message['response'] == '200')
+        self.assertTrue(message['response'] == 200)
 
     def test_leave_not_exists_chat_return_400(self):
         """ Если при выходе такого чата не существует - возвращается ответ 400 """
-        command = commands.ChatLeaveCommand('#test_room')
-        self.handler.handle(self.user, json.loads(str(command)))
+        command = ChatLeaveMessage('#test_room')
+        self.handler.handle(self.user, command.data)
         message = json.loads(self.user.send_messages.get_nowait().decode())
-        self.assertTrue(message['response'] == '400')
+        self.assertTrue(message['response'] == 400)
 
     def test_send_message_to_user(self):
         """ Отправка сообщения пользователю передает его указанному получателю """
@@ -166,8 +167,8 @@ class TestHandlers(TestCase):
         user2.name = 'name2'
         self.users[user2_sock] = user2
 
-        command = commands.MessageCommand(self.user.name, user2.name, 'Message')
-        self.handler.handle(self.user, json.loads(str(command)))
+        command = TextMessage(self.user.name, user2.name, 'Message')
+        self.handler.handle(self.user, command.data)
         message = json.loads(user2.send_messages.get_nowait().decode())
         self.assertTrue(message['message'] == 'Message')
 
@@ -179,16 +180,16 @@ class TestHandlers(TestCase):
         user2.name = 'name2'
         self.users[user2_sock] = user2
 
-        command = commands.ChatCreateCommand('#test_room')
-        self.handler.handle(self.user, json.loads(str(command)))
+        command = ChatCreateMessage('#test_room')
+        self.handler.handle(self.user, command.data)
         message = self.user.send_messages.get_nowait()
 
-        command = commands.ChatJoinCommand('#test_room')
-        self.handler.handle(user2, json.loads(str(command)))
+        command = ChatJoinMessage('#test_room')
+        self.handler.handle(user2, command.data)
         message = user2.send_messages.get_nowait().decode()
 
-        command = commands.MessageCommand(self.user.name, '#test_room', 'Message')
-        self.handler.handle(self.user, json.loads(str(command)))
+        command = TextMessage(self.user.name, '#test_room', 'Message')
+        self.handler.handle(self.user, command.data)
 
         message1 = json.loads(self.user.send_messages.get_nowait().decode())
         message2 = json.loads(user2.send_messages.get_nowait().decode())
