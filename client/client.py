@@ -1,7 +1,8 @@
 import socket
 import json
 import sys
-import shared.commands as commands
+from shared.responses import *
+from shared.messages import *
 
 
 class ClientCommandHandler(object):
@@ -13,7 +14,7 @@ class ClientCommandHandler(object):
     def handle(self, command):
         """ Обработка команд """
         if command['action'] == 'probe':
-            self.socket.send(bytes(commands.PresenceCommand('ivan', "I'm here")))
+            self.socket.send(bytes(PresenceMessage('ivan', "I'm here")))
 
 
 class Client(object):
@@ -44,19 +45,19 @@ class Client(object):
                 user_command.append(None)
 
                 if user_command[0] == 'q':
-                    send_command = commands.QuitCommand()
+                    send_command = QuitMessage()
                 elif user_command[0] == 'c':
                     if user_command[1][0] != '#':
                         user_command[1] = '#' + user_command[1]
-                    send_command = commands.ChatCreateCommand(user_command[1])
+                    send_command = ChatCreateMessage(user_command[1])
                 elif user_command[0] == 'j':
-                    send_command = commands.ChatJoinCommand(user_command[1])
+                    send_command = ChatJoinMessage(user_command[1])
                 elif user_command[0] == 'l':
-                    send_command = commands.ChatLeaveCommand(user_command[1])
+                    send_command = ChatLeaveMessage(user_command[1])
                 elif user_command[0] == 's':
-                    send_command = commands.MessageCommand(self.user_name, user_command[1], user_command[2])
+                    send_command = TextMessage(self.user_name, user_command[1], user_command[2])
                 else:
-                    send_command = commands.PresenceCommand(self.user_name, 'Online')
+                    send_command = PresenceMessage(self.user_name, 'Online')
 
                 self.socket.send(bytes(send_command))
 
@@ -76,10 +77,11 @@ class Client(object):
         while True:
             user_name = input('username: ')
             password = input('password: ')
-            auth_command = commands.AuthenticateCommand(user_name, password)
+            auth_command = AuthenticateMessage(user_name, password)
             self.socket.send(bytes(auth_command))
             response = json.loads(self.socket.recv(1024).decode())
-            success = response.get('response', 404) == '202'
+            success = response.get('response', 402) == 202
+            print(response)
             if success:
                 self.user_name = user_name
                 self.password = password

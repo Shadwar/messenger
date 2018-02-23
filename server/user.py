@@ -7,7 +7,9 @@ class User(object):
         self.sock = sock
         self.recv_messages = queue.Queue()
         self.send_messages = queue.Queue()
-        self.name = None
+        self.gid = None
+        self.login = None
+        self.chats = []
 
     def send_message(self, message):
         """ Добавить пользователю сообщение на отправку """

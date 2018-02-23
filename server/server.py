@@ -9,111 +9,10 @@ from server.chat import Chat
 from server.user import User
 from shared.messages import *
 from shared.responses import *
+from server.message_handlers import *
 
 
 logger = logging.getLogger('server')
-
-
-class ServerCommandHandler(object):
-    """ Серверный обработчик команд, поступающих от клиента """
-    def __init__(self, users, chats):
-        self.users = users
-        self.chats = chats
-        self.storage = FileStorage('server_messages.csv')
-
-    def execute(self):
-        """ Производит обработку входящих команд от всех пользователей"""
-        for user in list(self.users.values()):
-            while not user.recv_messages.empty():
-                command = user.recv_messages.get_nowait()
-                self.handle(user, command)
-
-    def handle(self, user, command):
-        """ Обработка поступившей команды. """
-        if command['action'] == 'authenticate':
-            self.authenticate(user, command)
-        elif command['action'] == 'quit':
-            self.quit(user)
-        elif command['action'] == 'presence':
-            self.presence(user, command)
-        elif command['action'] == 'create':
-            self.create_chat(user, command)
-        elif command['action'] == 'join':
-            self.join_chat(user, command)
-        elif command['action'] == 'leave':
-            self.leave_chat(user, command)
-        elif command['action'] == 'msg':
-            self.send_message(user, command)
-
-    def authenticate(self, user, command):
-        """ Аутентификация пользователя """
-        user.name = command['user']['account_name']
-        user.send_message(bytes(Response(202)))
-
-    def quit(self, user):
-        """ Выход пользователя с сервера """
-        del self.users[user.sock]
-        for chat in self.chats:
-            if user in chat.users:
-                chat.users.remove(user)
-        user.send_message(bytes(Response(200)))
-
-    def presence(self, user, command):
-        """ Подтверждение нахождения пользователя на сервере """
-        user.send_message(bytes(Response(200)))
-
-    def create_chat(self, user, command):
-        """ Создание нового чата """
-        title = command['room']
-        if title in [chat.title for chat in self.chats]:
-            user.send_message(bytes(ErrorResponse(400, 'Чат с таким названием уже существует')))
-        else:
-            logger.info('Создан новый чат: %s', title)
-            chat = Chat(title)
-            chat.users.append(user)
-            self.chats.append(chat)
-            user.send_message(bytes(Response(200)))
-
-    def join_chat(self, user, command):
-        """ Присоединение к существующему чату """
-        title = command['room']
-        for chat in self.chats:
-            if title == chat.title:
-                if user not in chat.users:
-                    chat.users.append(user)
-                logger.info('К чату %s присоединился пользователь %s', title, user.name)
-                user.send_message(bytes(Response(200)))
-                return
-        user.send_message(bytes(ErrorResponse(404, 'Чат с таким названием не найден')))
-
-    def leave_chat(self, user, command):
-        """ Покинуть чат """
-        title = command['room']
-        for chat in self.chats:
-            if title == chat.title and user in chat.users:
-                logger.info('Пользователь %s покинул чат %s', user.name, title)
-                chat.users.remove(user)
-                user.send_message(bytes(Response(200)))
-                return
-        user.send_message(bytes(ErrorResponse(400, 'Пользователь не находится в указанном чате')))
-
-    def send_message(self, user, command):
-        """ Отправка сообщения в указанный чат или пользователю """
-        name = command['to']
-        self.storage.add('messages', command['time'], command)
-        if name[0] == '#':
-            for chat in self.chats:
-                if chat.title == name:
-                    logger.info('Пользователь %s отправил сообщение в чат %s', user.name, name)
-                    chat.send_message(bytes(json.dumps(command).encode()))
-                    return
-        else:
-            for user in self.users.values():
-                if user.name == name:
-                    logger.info('Пользователь %s отправил сообщение пользователю %s', user.name, name)
-                    user.send_message(bytes(json.dumps(command).encode()))
-                    return
-        user.send_message(bytes(ErrorResponse(404, 'Получатель не найден')))
 
 
 class Server(object):
@@ -122,8 +21,9 @@ class Server(object):
     def __init__(self, ip, port):
         self.socket = Server.create_socket(ip, port)
         self.users = {}
-        self.chats = []
-        self.handler = ServerCommandHandler(self.users, self.chats)
+        self.chats = {}
+        self.handlers = None
+        self.init_handlers()
 
     def run(self):
         """ Запуск сервера
@@ -142,7 +42,7 @@ class Server(object):
                 if sock in self.users:
                     self.send_to_user(self.users[sock])
 
-            self.handler.execute()
+            self.handle()
 
     def accept_users(self):
         """ Подключение нового пользователя к серверу
@@ -163,7 +63,7 @@ class Server(object):
         if not raw_data:
             del self.users[user.sock]
             user.sock.close()
-            for chat in self.chats:
+            for chat in user.chats:
                 chat.remove(user)
         else:
             command = json.loads(raw_data.decode())
@@ -176,7 +76,7 @@ class Server(object):
         except queue.Empty:
             pass
         else:
-            user.sock.send(message)
+            user.sock.send(bytes(message))
 
     @classmethod
     def create_socket(cls, ip, port):
@@ -187,3 +87,29 @@ class Server(object):
         sock.listen(5)
         sock.setblocking(False)
         return sock
+
+    def handle(self):
+        """ Обработка входящих команд пользователя """
+        for user in self.users.values():
+            try:
+                message = user.recv_messages.get_nowait()
+            except queue.Empty:
+                pass
+            else:
+                action = message['action']
+                if action in self.handlers:
+                    self.handlers[action]().run(self, user, message)
+
+    def init_handlers(self):
+        """ Дорбавление обработчиков входящих сообщений """
+        self.handlers = dict({
+            'authenticate': AuthenticateMessageHandler,
+            'quit': QuitMessageHandler,
+            'msg': TextMessageHandler,
+            'join': ChatJoinMessageHandler,
+            'leave': ChatLeaveMessageHandler,
+            'create': ChatCreateMessageHandler,
+            'get_contacts': GetContactsMessageHandler,
+            'add_contact': AddContactMessageHandler,
+            'del_contact': DelContactMessageHandler,
+        })

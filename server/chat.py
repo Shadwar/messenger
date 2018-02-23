@@ -2,6 +2,7 @@ class Chat(object):
     """ Чат """
     def __init__(self, title):
         self.title = title
+        self.gid = None
         self.users = []
 
     def connect(self, user):

@@ -7,6 +7,9 @@ class Response(JIM):
         super().__init__()
         self.data['response'] = code
 
+    def __eq__(self, other):
+        return self.data == other.data
+
 
 class AlertResponse(Response):
     """ Ответ сервера о сообщении/уведомлении """
