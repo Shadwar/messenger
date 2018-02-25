@@ -5,7 +5,7 @@ import logging
 import select
 import queue
 
-from client.message_handlers import WelcomeHandler
+from client.message_handlers import AuthenticateHandler
 from shared.responses import *
 from shared.messages import *
 
@@ -27,6 +27,7 @@ class Client(object):
     """ Клиент мессенджера
     """
     def __init__(self, addr, port):
+        self.signals = dict()
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.socket.connect((addr, port))
         self.chats = {}
@@ -54,6 +55,7 @@ class Client(object):
                     exit(0)
                 else:
                     command = json.loads(raw_data.decode())
+                    print(command)
                     self.recv_messages.put(command)
 
             if write_s:
@@ -62,6 +64,7 @@ class Client(object):
                 except queue.Empty:
                     pass
                 else:
+                    print(message)
                     self.socket.send(bytes(message))
 
             self.handle()
@@ -91,8 +94,7 @@ class Client(object):
 
     def init_handlers(self):
         self.handlers = dict({
-            'welcome': WelcomeHandler,
-            'authenticate': WelcomeHandler,
+            'authenticate': AuthenticateHandler,
         })
         pass
 

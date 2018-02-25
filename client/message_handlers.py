@@ -16,14 +16,13 @@ class MessageHandler(object):
         pass
 
 
-class WelcomeHandler(MessageHandler):
-    """ Приглашение от сервера, сделать аутентификацию """
+class AuthenticateHandler(MessageHandler):
+    """ Аутентификация на сервере """
     def run(self, client, command, response):
-        if not response or response['response'] != 202:
-            user_name = input('username: ')
-            password = input('password: ')
-            auth_command = AuthenticateMessage(user_name, password)
-            client.send_message(auth_command)
+        if response and response['response'] == 202:
+            client.signals['login_ok'].emit()
+        else:
+            client.signals['login_error'].emit()
 
 
 class ProbeHandler(MessageHandler):
