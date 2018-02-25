@@ -37,15 +37,15 @@ class AuthenticateMessageHandler(MessageHandler):
                             chat = Chat(title=db_chat.name)
                             chat.gid = db_chat.gid
                             server.chats[chat.title] = chat
-                user.send_message(Response(202))
+                user.send_message(Response(202, command['id']))
             else:
-                user.send_message(Response(402))
+                user.send_message(Response(402, command['id']))
         else:
             db_user = SQLUser(login=login, password=password)
             session.add(db_user)
             session.commit()
             user.gid = db_user.gid
-            user.send_message(Response(202))
+            user.send_message(Response(202, command['id']))
 
 
 class QuitMessageHandler(MessageHandler):
@@ -53,13 +53,13 @@ class QuitMessageHandler(MessageHandler):
     def run(self, server, user, command):
         # TODO: отправить статус оффлайн всем пользователям,
         # у которых данный пользователь в контакт-листе
-        user.send_message(Response(200))
+        user.send_message(Response(200, command['id']))
 
 
 class PresenceMessageHandler(MessageHandler):
     """ Обработка сообщения о нахождении пользователя на сервере"""
     def run(self, server, user, command):
-        user.send_message(Response(200))
+        user.send_message(Response(200, command['id']))
 
 
 class TextMessageHandler(MessageHandler):
@@ -94,7 +94,7 @@ class TextMessageHandler(MessageHandler):
             session.add(db_message)
             session.commit()
 
-        user.send_message(Response(202))
+        user.send_message(Response(202, command['id']))
 
 
 class ChatJoinMessageHandler(MessageHandler):
@@ -108,7 +108,7 @@ class ChatJoinMessageHandler(MessageHandler):
         db_chat_user = SQLUserChat(user=user.gid, chat=chat.gid)
         session.add(db_chat_user)
         session.commit()
-        user.send_message(Response(202))
+        user.send_message(Response(202, command['id']))
 
 
 class ChatLeaveMessageHandler(MessageHandler):
@@ -120,7 +120,7 @@ class ChatLeaveMessageHandler(MessageHandler):
         chat.users.remove(user)
         session = sessionmaker(bind=self.db_engine)()
         session.query(SQLUserChat).filter_by(chat=chat.gid).filter_by(user.user.gid).delete()
-        user.send_message(Response(202))
+        user.send_message(Response(202, command[id]))
 
 
 class ChatCreateMessageHandler(MessageHandler):
@@ -130,7 +130,7 @@ class ChatCreateMessageHandler(MessageHandler):
         chat_name = command['room']
         db_chat = session.query(SQLChat).filter_by(name=chat_name).first()
         if db_chat:
-            user.send_message(AlertResponse(400, message='Чат с таким названием уже существует'))
+            user.send_message(AlertResponse(400, command['id'], message='Чат с таким названием уже существует'))
         else:
             chat = Chat(chat_name)
             chat.users.append(user)
@@ -145,7 +145,7 @@ class ChatCreateMessageHandler(MessageHandler):
             session.add(db_user_chat)
             session.commit()
 
-            user.send_message(Response(202))
+            user.send_message(Response(202, command['id']))
 
 
 class GetContactsMessageHandler(MessageHandler):
@@ -168,9 +168,9 @@ class AddContactMessageHandler(MessageHandler):
             db_contact = SQLContact(user=user.gid, contact=contact.gid)
             session.add(db_contact)
             session.commit()
-            user.send_message(Response(200))
+            user.send_message(Response(200, command['id']))
         else:
-            user.send_message(ErrorResponse(400, message='Такой пользователь не найден.'))
+            user.send_message(ErrorResponse(400, command['id'], message='Такой пользователь не найден.'))
 
 
 class DelContactMessageHandler(MessageHandler):
@@ -179,4 +179,4 @@ class DelContactMessageHandler(MessageHandler):
         session = sessionmaker(bind=self.db_engine)()
         db_other = session.query(SQLUser).filter_by(name=command['name']).first()
         session.query(SQLContact).filter_by(contact=db_other.gid).delete()
-        user.send_message(Response(202))
+        user.send_message(Response(202, command['id']))

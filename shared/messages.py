@@ -15,6 +15,12 @@ class ProbeMessage(Message):
         self.data['action'] = 'probe'
 
 
+class WelcomeMessage(Message):
+    def __init__(self):
+        super().__init__()
+        self.data['action'] = 'welcome'
+
+
 class AuthenticateMessage(Message):
     """ Запрос пользователя об аутентификации """
     def __init__(self, login, password):

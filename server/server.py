@@ -52,6 +52,7 @@ class Server(object):
             sock.setblocking(False)
             user = User(sock)
             self.users[sock] = user
+            user.send_message(WelcomeMessage())
         except BlockingIOError:
             pass
 

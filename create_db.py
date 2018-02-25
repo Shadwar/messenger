@@ -71,44 +71,21 @@ def user_db():
     cursor = connection.cursor()
 
     # Удаление старых таблиц
-    cursor.execute('drop table if exists contacts')
-    cursor.execute('drop table if exists chats')
-    cursor.execute('drop table if exists users_chats')
     cursor.execute('drop table if exists messages')
 
     cursor.execute("""
       create table messages (
         gid integer primary key autoincrement,
-        u_from integer references users (gid),
-        u_to integer references users (gid),
+        sender varchar(30),
+        receiver varchar(30),
         message text
-      )
-    """)
-
-    cursor.execute("""
-      create table chats (
-        gid integer primary key autoincrement,
-        name varchar(30) unique
-      )
-    """)
-
-    cursor.execute("""
-      create table users_chats (
-        user integer references users (gid),
-        chat integer references chats (gid)
-      )
-    """)
-
-    cursor.execute("""
-      create table contacts (
-        user integer references users (gid),
-        contact integer references users (gid)
       )
     """)
 
 
 def main():
     server_db()
+    user_db()
 
 
 if __name__ == '__main__':

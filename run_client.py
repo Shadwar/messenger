@@ -1,20 +1,11 @@
 import sys
-from client.client import Client
+from PyQt5.QtWidgets import QApplication
+from client.login_window import LoginWindow
+
 
 if __name__ == '__main__':
-    args = sys.argv
+    app = QApplication(sys.argv)
+    wnd = LoginWindow()
+    wnd.show()
 
-    if len(args) not in (2, 3):
-        print("Ошибка запуска клиента:")
-        print("client.py addr [port]")
-        sys.exit()
-
-    addr = args[1]
-
-    try:
-        port = int(args[2])
-    except Exception:
-        port = 7777
-
-    client = Client(addr, port)
-    client.run()
+    exit(app.exec_())
