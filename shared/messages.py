@@ -109,7 +109,7 @@ class ContactMessage(Message):
         super().__init__()
         self.data.update({
             'action': 'contact_list',
-            'user_id': login
+            'contact': login
         })
 
 
@@ -119,7 +119,7 @@ class AddContactMessage(Message):
         super().__init__()
         self.data.update({
             'action': 'add_contact',
-            'user_id': login
+            'contact': login
         })
 
 
@@ -129,5 +129,15 @@ class DelContactMessage(Message):
         super().__init__()
         self.data.update({
             'action': 'del_contact',
-            'user_id': login
+            'contact': login
+        })
+
+
+class GetTextMessages(Message):
+    """ Получение сообщений определенного пользователя """
+    def __init__(self, contact):
+        super().__init__()
+        self.data.update({
+            'action': 'get_messages',
+            'contact': contact
         })

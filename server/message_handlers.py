@@ -4,6 +4,7 @@ from server.chat import Chat
 from shared.responses import *
 from shared.messages import *
 from server.alchemy import *
+from sqlalchemy import or_
 
 
 class MessageHandler(object):
@@ -163,7 +164,7 @@ class AddContactMessageHandler(MessageHandler):
     """ Добавить контакт пользователя """
     def run(self, server, user, command):
         session = sessionmaker(bind=self.db_engine)()
-        contact = session.query(SQLUser).filter_by(name=command['name']).first()
+        contact = session.query(SQLUser).filter_by(login=command['contact']).first()
         if contact:
             db_contact = SQLContact(user=user.gid, contact=contact.gid)
             session.add(db_contact)
@@ -180,3 +181,24 @@ class DelContactMessageHandler(MessageHandler):
         db_other = session.query(SQLUser).filter_by(name=command['name']).first()
         session.query(SQLContact).filter_by(contact=db_other.gid).delete()
         user.send_message(Response(202, command['id']))
+
+
+class GetTextMessagesHandler(MessageHandler):
+    """ Запрос на все сообщения для определенного контакта """
+    def run(self, server, user, command):
+        contact = command['contact']
+        last_time = command['last_time']
+
+        session = sessionmaker(bind=self.db_engine)()
+        if contact.startswith('#'):
+            pass
+        else:
+            db_contact = session.query(SQLUser).filter_by(login=contact)
+            if db_contact:
+                db_messages = session.query(SQLMessage).filter(or_(u_from=user.gid, u_to=user.gid)).filter(or_(u_from=db_contact.gid, u_to=db_contact.gid)).all()
+                for db_message in db_messages:
+                    sender_gid = db_message.u_from
+                    receiver_gid = db_message.u_to
+                    db_sender = session.query(SQLUser).filter_by(gid=sender_gid)
+                    db_receiver = session.query(SQLUser).filter_by(gid=receiver_gid)
+                    user.send_message(TextMessage(db_sender.login, db_receiver.login, db_message.message))

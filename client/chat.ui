@@ -20,7 +20,7 @@
       <x>5</x>
       <y>10</y>
       <width>251</width>
-      <height>581</height>
+      <height>501</height>
      </rect>
     </property>
    </widget>
@@ -55,6 +55,29 @@
     </property>
     <property name="text">
      <string>Send</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="add_contact_button">
+    <property name="geometry">
+     <rect>
+      <x>70</x>
+      <y>550</y>
+      <width>121</width>
+      <height>31</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Добавить контакт</string>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="add_contact_input">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>520</y>
+      <width>241</width>
+      <height>27</height>
+     </rect>
     </property>
    </widget>
   </widget>

@@ -5,7 +5,7 @@ import logging
 import select
 import queue
 
-from client.message_handlers import AuthenticateHandler
+from client.message_handlers import *
 from shared.responses import *
 from shared.messages import *
 
@@ -31,7 +31,8 @@ class Client(object):
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.socket.connect((addr, port))
         self.chats = {}
-        self.contacts = {}
+        self.contacts = []
+        self.messages = dict()
         self.login = None
         self.handlers = {}
         self.init_handlers()
@@ -95,6 +96,8 @@ class Client(object):
     def init_handlers(self):
         self.handlers = dict({
             'authenticate': AuthenticateHandler,
+            'add_contact': AddContactHandler,
+            'contact_list': ContactHandler,
         })
         pass
 
