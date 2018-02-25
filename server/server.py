@@ -67,6 +67,7 @@ class Server(object):
             for chat in user.chats:
                 chat.remove(user)
         else:
+            print(raw_data)
             command = json.loads(raw_data.decode())
             user.recv_message(command)
 

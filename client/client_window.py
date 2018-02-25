@@ -1,3 +1,4 @@
+from PyQt5.QtGui import QStandardItemModel, QStandardItem
 from PyQt5.QtWidgets import QMainWindow
 from PyQt5.QtCore import pyqtSignal
 
@@ -17,6 +18,7 @@ class ClientWindow(QMainWindow):
 
     def init_signals(self):
         self.client.signals['login_ok'].connect(self.open_chat_window)
+        self.client.signals['add_contact'].connect(self.add_contact_signal)
 
     def open_login_window(self):
         """ Создать окно с вводом пароля """
@@ -32,14 +34,33 @@ class ClientWindow(QMainWindow):
         self.ui.setupUi(self)
         self.ui.retranslateUi(self)
         self.ui.add_contact_button.pressed.connect(self.add_contact_clicked)
+        self.client.contacts = QStandardItemModel(self.ui.contacts)
+        self.ui.contacts.doubleClicked.connect(self.item_contact_clicked)
 
     def login_clicked(self):
+        """ Обработчик нажатия кнопки логина """
         login = self.ui.login_input.text()
         password = self.ui.password_input.text()
         message = AuthenticateMessage(login, password)
         self.client.send_message(message)
 
     def add_contact_clicked(self):
+        """ Обработчик нажатия кнопки добавления нового контакта """
         contact = self.ui.add_contact_input.text()
         message = AddContactMessage(contact)
         self.client.send_message(message)
+
+    def add_contact_signal(self, contact):
+        """ Сигнал по добавлению нового контакта,
+            добавляет контакт в отображаемый список контактов
+        """
+        contact = QStandardItem(contact)
+        contact.setCheckable(False)
+        contact.setEditable(False)
+        self.client.contacts.appendRow(contact)
+        self.ui.contacts.setModel(self.client.contacts)
+
+    def item_contact_clicked(self, item):
+        """ Обработчик выбора контакта в списке контактов """
+        contact = item.data()
+        print(item.data())

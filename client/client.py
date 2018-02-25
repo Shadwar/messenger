@@ -5,6 +5,8 @@ import logging
 import select
 import queue
 
+from PyQt5.QtGui import QStandardItemModel
+
 from client.message_handlers import *
 from shared.responses import *
 from shared.messages import *
@@ -31,7 +33,7 @@ class Client(object):
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.socket.connect((addr, port))
         self.chats = {}
-        self.contacts = []
+        self.contacts = None
         self.messages = dict()
         self.login = None
         self.handlers = {}

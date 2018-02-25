@@ -166,10 +166,14 @@ class AddContactMessageHandler(MessageHandler):
         session = sessionmaker(bind=self.db_engine)()
         contact = session.query(SQLUser).filter_by(login=command['contact']).first()
         if contact:
-            db_contact = SQLContact(user=user.gid, contact=contact.gid)
-            session.add(db_contact)
-            session.commit()
-            user.send_message(Response(200, command['id']))
+            db_contact = session.query(SQLContact).filter_by(user=user.gid).filter_by(contact=contact.gid).first()
+            if db_contact:
+                user.send_message(ErrorResponse(400, command['id'], message='Такой контакт уже существует'))
+            else:
+                db_contact = SQLContact(user=user.gid, contact=contact.gid)
+                session.add(db_contact)
+                session.commit()
+                user.send_message(Response(200, command['id']))
         else:
             user.send_message(ErrorResponse(400, command['id'], message='Такой пользователь не найден.'))
 

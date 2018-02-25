@@ -8,12 +8,15 @@ from client.client_window import ClientWindow
 class ClientThread(QThread):
     login_ok_signal = pyqtSignal()
     login_error_signal = pyqtSignal()
+    add_contact = pyqtSignal(str)
 
     def __init__(self, cl):
         QThread.__init__(self)
         self.client = cl
         self.client.signals['login_ok'] = self.login_ok_signal
         self.client.signals['login_error'] = self.login_error_signal
+        self.client.signals['add_contact'] = self.add_contact
+
 
     def __del__(self):
         self.wait()
