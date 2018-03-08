@@ -4,6 +4,7 @@ import sys
 import logging
 import select
 import queue
+from time import sleep
 
 from PyQt5.QtGui import QStandardItemModel
 
@@ -57,8 +58,8 @@ class Client(object):
                     self.socket.close()
                     exit(0)
                 else:
-                    command = json.loads(raw_data.decode())
-                    self.recv_messages.put(command)
+                    for command in self.parse_raw_received(raw_data.decode()):
+                        self.recv_messages.put(command)
 
             if write_s:
                 try:
@@ -69,6 +70,7 @@ class Client(object):
                     self.socket.send(bytes(message))
 
             self.handle()
+            sleep(0.1)
 
     def handle(self):
         """ Обработка входящих сообщений """
@@ -83,7 +85,6 @@ class Client(object):
                 message = json.loads(bytes(self.sended_messages[response['origin']]).decode())
                 del self.sended_messages[response['origin']]
             action = message['action']
-            print(response, message)
             if action in self.handlers:
                 self.handlers[action]().run(self, message, response)
 
@@ -101,6 +102,25 @@ class Client(object):
             'msg': TextMessageHandler,
         })
         pass
+
+    def parse_raw_received(self, raw):
+        """ Парсит входящий массив на отдельные команды"""
+        commands = []
+        index = 0
+        curl = 0
+        command = ""
+        while index < len(raw):
+            command += raw[index]
+            if raw[index] == '{':
+                curl += 1
+            elif raw[index] == '}':
+                curl -= 1
+                if curl == 0:
+                    commands.append(json.loads(command))
+                    command = ""
+            index += 1
+
+        return commands
 
 
     #     if self.authenticate():

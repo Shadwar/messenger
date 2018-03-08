@@ -4,6 +4,8 @@ import select
 import queue
 import json
 import logging
+from time import sleep
+
 from server.file_storage import FileStorage
 from server.chat import Chat
 from server.user import User
@@ -43,6 +45,7 @@ class Server(object):
                     self.send_to_user(self.users[sock])
 
             self.handle()
+            sleep(0.05)
 
     def accept_users(self):
         """ Подключение нового пользователя к серверу
@@ -67,9 +70,8 @@ class Server(object):
             for chat in user.chats:
                 chat.remove(user)
         else:
-            print(raw_data)
-            command = json.loads(raw_data.decode())
-            user.recv_message(command)
+            for command in self.parse_raw_received(raw_data.decode()):
+                user.recv_message(command)
 
     def send_to_user(self, user):
         """ Обработка сокетов на запись """
@@ -126,3 +128,22 @@ class Server(object):
             if user.login == login:
                 return user
         return None
+
+    def parse_raw_received(self, raw):
+        """ Парсит входящий массив на отдельные команды"""
+        commands = []
+        index = 0
+        curl = 0
+        command = ""
+        while index < len(raw):
+            command += raw[index]
+            if raw[index] == '{':
+                curl += 1
+            elif raw[index] == '}':
+                curl -= 1
+                if curl == 0:
+                    commands.append(json.loads(command))
+                    command = ""
+            index += 1
+
+        return commands

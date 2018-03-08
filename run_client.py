@@ -9,6 +9,7 @@ class ClientThread(QThread):
     login_ok_signal = pyqtSignal()
     login_error_signal = pyqtSignal()
     add_contact = pyqtSignal(str)
+    text_message = pyqtSignal(str, str, str)
 
     def __init__(self, cl):
         QThread.__init__(self)
@@ -16,6 +17,7 @@ class ClientThread(QThread):
         self.client.signals['login_ok'] = self.login_ok_signal
         self.client.signals['login_error'] = self.login_error_signal
         self.client.signals['add_contact'] = self.add_contact
+        self.client.signals['text_message'] = self.text_message
 
 
     def __del__(self):

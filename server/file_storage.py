@@ -9,7 +9,6 @@ class FileStorage(Storage):
         self.filename = filename
 
     def add(self, table, key, data):
-        print(data)
         with open(self.filename, 'a', newline='', encoding='utf-8') as f:
             writer = csv.writer(f, delimiter=':', quotechar='|', quoting=csv.QUOTE_MINIMAL)
             writer.writerow([table, key, json.dumps(data)])

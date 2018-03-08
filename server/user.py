@@ -20,4 +20,4 @@ class User(object):
         self.recv_messages.put(message)
 
     def __repr__(self):
-        return "User<gid=%d, login=%s>" % (self.gid, self.login)
+        return "User<gid={}, login={}>".format(self.gid, self.login)

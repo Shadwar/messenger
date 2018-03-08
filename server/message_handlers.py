@@ -77,7 +77,9 @@ class TextMessageHandler(MessageHandler):
         db_message = None
 
         if receiver.startswith('#'):
-            server.chats[receiver].send_message(text_message)
+            if receiver in server.chats:
+                server.chats[receiver].send_message(text_message)
+
             db_receiver = session.query(SQLChat).filter_by(name=receiver).first()
             if db_receiver:
                 db_message = SQLChatMessage(
@@ -85,12 +87,15 @@ class TextMessageHandler(MessageHandler):
                         u_to=db_receiver.gid,
                         message=message)
         else:
-            server.users[receiver].send_message(text_message)
+            receiver_user = server.get_online_user_by_login(receiver)
+            if receiver_user:
+                receiver_user.send_message(text_message)
+
             db_receiver = session.query(SQLUser).filter_by(login=receiver).first()
             if db_receiver:
                 db_message = SQLMessage(
                         u_from=user.gid,
-                        u_to=receiver.gid,
+                        u_to=db_receiver.gid,
                         message=message
                 )
         if db_message:
@@ -179,7 +184,6 @@ class AddContactMessageHandler(MessageHandler):
                 session.commit()
                 user.send_message(Response(200, command['id']))
                 other = server.get_online_user_by_login(contact.login)
-                print(contact, other)
                 if other:
                     command = AddContactMessage(user.login)
                     other.send_message(command)

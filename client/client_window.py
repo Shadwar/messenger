@@ -20,6 +20,7 @@ class ClientWindow(QMainWindow):
     def init_signals(self):
         self.client.signals['login_ok'].connect(self.open_chat_window)
         self.client.signals['add_contact'].connect(self.add_contact_signal)
+        self.client.signals['text_message'].connect(self.add_text_message_signal)
 
     def open_login_window(self):
         """ Создать окно с вводом пароля """
@@ -56,20 +57,37 @@ class ClientWindow(QMainWindow):
         """ Сигнал по добавлению нового контакта,
             добавляет контакт в отображаемый список контактов
         """
+        if contact not in self.client.messages:
+            self.client.messages[contact] = QStandardItemModel(self.ui.chat)
+
         contact = QStandardItem(contact)
         contact.setCheckable(False)
         contact.setEditable(False)
         self.client.contacts.appendRow(contact)
         self.ui.contacts.setModel(self.client.contacts)
 
+    def add_text_message_signal(self, chat, sender, message):
+        """ Сигнал по добавлению нового сообщения """
+        if chat not in self.client.messages:
+            self.client.messages[chat] = QStandardItemModel(self.ui.chat)
+
+        message_item = QStandardItem(sender + ': ' + message)
+        message_item.setCheckable(False)
+        message_item.setEditable(False)
+        self.client.messages[chat].appendRow(message_item)
+        #
+        # if self.selected_contact == chat:
+        #     self.ui.chat.setModel(self.client.messages[chat])
+
     def send_text_message(self):
         """ Отправление сообщения выбранному контакту """
-        text = self.ui.text_input.text()
-        message = TextMessage(self.client.login, self.selected_contact, text)
-        self.client.send_message(message)
+        if self.selected_contact:
+            text = self.ui.text_input.toPlainText()
+            message = TextMessage(self.client.login, self.selected_contact, text)
+            self.client.send_message(message)
 
     def item_contact_clicked(self, item):
         """ Обработчик выбора контакта в списке контактов """
         contact = item.data()
         self.selected_contact = contact
-        print(item.data())
+        self.ui.chat.setModel(self.client.messages[contact])

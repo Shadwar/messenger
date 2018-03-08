@@ -32,10 +32,8 @@ class AuthenticateHandler(MessageHandler):
 
             db_messages = session.query(SQLMessage).filter_by(user=client.login).all()
             for db_message in db_messages:
-                chat = db_message.u_from if db_message.u_from == client.login else db_message.u_to
-                if chat not in client.messages:
-                    client.messages[chat] = []
-                client.messages[chat].append(db_message)
+                chat = db_message.u_from if db_message.u_from != client.login else db_message.u_to
+                client.signals['text_message'].emit(chat, db_message.u_from, db_message.message)
 
             get_contacts = GetContactsMessage()
             client.send_message(get_contacts)
@@ -92,3 +90,5 @@ class TextMessageHandler(MessageHandler):
         db_message = SQLMessage(user=client.login, u_from=sender, u_to=receiver, message=message)
         session.add(db_message)
         session.commit()
+        chat = db_message.u_from if db_message.u_from != client.login else db_message.u_to
+        client.signals['text_message'].emit(chat, db_message.u_from, message)
