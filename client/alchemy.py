@@ -24,6 +24,7 @@ class SQLMessage(SQLBase):
     user = Column(Unicode())
     u_from = Column(Unicode())
     u_to = Column(Unicode())
+    time = Column(Integer())
     message = Column(Unicode())
 
     def __repr__(self):

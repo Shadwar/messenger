@@ -120,6 +120,7 @@ class Client(object):
                     command = ""
             index += 1
 
+        print(commands)
         return commands
 
 

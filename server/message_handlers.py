@@ -85,6 +85,7 @@ class TextMessageHandler(MessageHandler):
                 db_message = SQLChatMessage(
                         u_from=user.gid,
                         u_to=db_receiver.gid,
+                        time=command['time'],
                         message=message)
         else:
             receiver_user = server.get_online_user_by_login(receiver)
@@ -96,6 +97,7 @@ class TextMessageHandler(MessageHandler):
                 db_message = SQLMessage(
                         u_from=user.gid,
                         u_to=db_receiver.gid,
+                        time=command['time'],
                         message=message
                 )
         if db_message:
@@ -209,18 +211,21 @@ class GetTextMessagesHandler(MessageHandler):
     """ Запрос на все сообщения для определенного контакта """
     def run(self, server, user, command):
         contact = command['contact']
-        last_time = command['last_time']
+        last_time = int(command['time'])
 
         session = sessionmaker(bind=self.db_engine)()
         if contact.startswith('#'):
             pass
         else:
-            db_contact = session.query(SQLUser).filter_by(login=contact)
+            db_contact = session.query(SQLUser).filter_by(login=contact).first()
             if db_contact:
-                db_messages = session.query(SQLMessage).filter(or_(u_from=user.gid, u_to=user.gid)).filter(or_(u_from=db_contact.gid, u_to=db_contact.gid)).all()
+                db_messages = session.query(SQLMessage)\
+                    .filter(or_(SQLMessage.u_from == user.gid, SQLMessage.u_to == user.gid))\
+                    .filter(or_(SQLMessage.u_from == db_contact.gid, SQLMessage.u_to == db_contact.gid))\
+                    .filter(SQLMessage.time >= last_time).all()
                 for db_message in db_messages:
                     sender_gid = db_message.u_from
                     receiver_gid = db_message.u_to
-                    db_sender = session.query(SQLUser).filter_by(gid=sender_gid)
-                    db_receiver = session.query(SQLUser).filter_by(gid=receiver_gid)
+                    db_sender = session.query(SQLUser).filter_by(gid=sender_gid).first()
+                    db_receiver = session.query(SQLUser).filter_by(gid=receiver_gid).first()
                     user.send_message(TextMessage(db_sender.login, db_receiver.login, db_message.message))

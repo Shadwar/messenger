@@ -116,6 +116,7 @@ class Server(object):
             'get_contacts': GetContactsMessageHandler,
             'add_contact': AddContactMessageHandler,
             'del_contact': DelContactMessageHandler,
+            'get_messages': GetTextMessagesHandler
         })
 
     def get_online_user_by_login(self, login):
@@ -146,4 +147,5 @@ class Server(object):
                     command = ""
             index += 1
 
+        print(commands)
         return commands

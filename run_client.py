@@ -51,6 +51,4 @@ if __name__ == '__main__':
 
     thr.start()
 
-    print(dir(app))
-
     exit(app.exec_())

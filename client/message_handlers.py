@@ -35,11 +35,18 @@ class AuthenticateHandler(MessageHandler):
                 chat = db_message.u_from if db_message.u_from != client.login else db_message.u_to
                 client.signals['text_message'].emit(chat, db_message.u_from, db_message.message)
 
-            get_contacts = GetContactsMessage()
-            client.send_message(get_contacts)
             for db_contact in db_contacts:
                 get_messages = GetTextMessages(db_contact.contact)
+                db_last_message = session.query(SQLMessage).filter_by(user=client.login).order_by('-gid').first()
+                if db_last_message:
+                    get_messages.data['time'] = db_last_message.time
+                else:
+                    get_messages.data['time'] = 0
+
                 client.send_message(get_messages)
+
+            get_contacts = GetContactsMessage()
+            client.send_message(get_contacts)
         else:
             client.signals['login_error'].emit()
 
@@ -71,6 +78,8 @@ class ContactHandler(MessageHandler):
         db_contact = SQLContact(login=client.login, contact=contact)
         session.add(db_contact)
         session.commit()
+        get_messages = GetTextMessages(db_contact.contact)
+        client.send_message(get_messages)
         client.signals['add_contact'].emit(contact)
 
 
@@ -86,8 +95,9 @@ class TextMessageHandler(MessageHandler):
         sender = command['from']
         receiver = command['to']
         message = command['message']
+        m_time = command['time']
         session = sessionmaker(bind=self.db_engine)()
-        db_message = SQLMessage(user=client.login, u_from=sender, u_to=receiver, message=message)
+        db_message = SQLMessage(user=client.login, u_from=sender, u_to=receiver, message=message, time=m_time)
         session.add(db_message)
         session.commit()
         chat = db_message.u_from if db_message.u_from != client.login else db_message.u_to

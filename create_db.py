@@ -27,6 +27,7 @@ def server_db():
         gid integer primary key autoincrement,
         u_from integer references users (gid),
         u_to integer references users (gid),
+        time integer,
         message text
       )
     """)
@@ -36,6 +37,7 @@ def server_db():
         gid integer primary key autoincrement,
         u_from integer references users (gid),
         u_to integer references chats (gid),
+        time integer,
         message text
       )
     """)
@@ -80,6 +82,7 @@ def user_db():
         user varchar(30),
         u_from varchar(30),
         u_to varchar(30),
+        time integer,
         message text
       )
     """)

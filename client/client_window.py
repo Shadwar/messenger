@@ -83,6 +83,7 @@ class ClientWindow(QMainWindow):
         """ Отправление сообщения выбранному контакту """
         if self.selected_contact:
             text = self.ui.text_input.toPlainText()
+            self.ui.text_input.setPlainText('')
             message = TextMessage(self.client.login, self.selected_contact, text)
             self.client.send_message(message)
 
