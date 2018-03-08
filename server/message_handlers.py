@@ -4,7 +4,7 @@ from server.chat import Chat
 from shared.responses import *
 from shared.messages import *
 from server.alchemy import *
-from sqlalchemy import or_
+from sqlalchemy import or_, and_
 
 
 class MessageHandler(object):
@@ -29,6 +29,7 @@ class AuthenticateMessageHandler(MessageHandler):
         if db_user:
             if db_user.password == password:
                 user.gid = db_user.gid
+                user.login = login
                 # Загрузка всех чатов, в которых участвует пользователь
                 db_user_chats = session.query(SQLUserChat).filter_by(user=user.gid).all()
                 for uc in db_user_chats:
@@ -46,6 +47,7 @@ class AuthenticateMessageHandler(MessageHandler):
             session.add(db_user)
             session.commit()
             user.gid = db_user.gid
+            user.login = login
             user.send_message(Response(202, command['id']))
 
 
@@ -172,8 +174,15 @@ class AddContactMessageHandler(MessageHandler):
             else:
                 db_contact = SQLContact(user=user.gid, contact=contact.gid)
                 session.add(db_contact)
+                other_contact = SQLContact(user=contact.gid, contact=user.gid)
+                session.add(other_contact)
                 session.commit()
                 user.send_message(Response(200, command['id']))
+                other = server.get_online_user_by_login(contact.login)
+                print(contact, other)
+                if other:
+                    command = AddContactMessage(user.login)
+                    other.send_message(command)
         else:
             user.send_message(ErrorResponse(400, command['id'], message='Такой пользователь не найден.'))
 
@@ -183,7 +192,12 @@ class DelContactMessageHandler(MessageHandler):
     def run(self, server, user, command):
         session = sessionmaker(bind=self.db_engine)()
         db_other = session.query(SQLUser).filter_by(name=command['name']).first()
-        session.query(SQLContact).filter_by(contact=db_other.gid).delete()
+        session.query(SQLContact).filter(
+                or_(
+                        and_(user=user.gid, contact=db_other.gid),
+                        and_(user=db_other.gid, contact=user.gid)
+                )
+        )
         user.send_message(Response(202, command['id']))
 
 

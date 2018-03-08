@@ -58,7 +58,6 @@ class Client(object):
                     exit(0)
                 else:
                     command = json.loads(raw_data.decode())
-                    print(command)
                     self.recv_messages.put(command)
 
             if write_s:
@@ -67,7 +66,6 @@ class Client(object):
                 except queue.Empty:
                     pass
                 else:
-                    print(message)
                     self.socket.send(bytes(message))
 
             self.handle()
@@ -100,6 +98,7 @@ class Client(object):
             'authenticate': AuthenticateHandler,
             'add_contact': AddContactHandler,
             'contact_list': ContactHandler,
+            'msg': TextMessageHandler,
         })
         pass
 

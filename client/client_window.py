@@ -13,6 +13,7 @@ class ClientWindow(QMainWindow):
         super().__init__(parent)
         self.client = client
 
+        self.selected_contact = None
         self.ui = None
         self.open_login_window()
 
@@ -36,6 +37,7 @@ class ClientWindow(QMainWindow):
         self.ui.add_contact_button.pressed.connect(self.add_contact_clicked)
         self.client.contacts = QStandardItemModel(self.ui.contacts)
         self.ui.contacts.doubleClicked.connect(self.item_contact_clicked)
+        self.ui.send_button.pressed.connect(self.send_text_message)
 
     def login_clicked(self):
         """ Обработчик нажатия кнопки логина """
@@ -60,7 +62,14 @@ class ClientWindow(QMainWindow):
         self.client.contacts.appendRow(contact)
         self.ui.contacts.setModel(self.client.contacts)
 
+    def send_text_message(self):
+        """ Отправление сообщения выбранному контакту """
+        text = self.ui.text_input.text()
+        message = TextMessage(self.client.login, self.selected_contact, text)
+        self.client.send_message(message)
+
     def item_contact_clicked(self, item):
         """ Обработчик выбора контакта в списке контактов """
         contact = item.data()
+        self.selected_contact = contact
         print(item.data())

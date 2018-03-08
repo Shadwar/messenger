@@ -18,3 +18,6 @@ class User(object):
     def recv_message(self, message):
         """ Добавить пользователю полученное сообщение"""
         self.recv_messages.put(message)
+
+    def __repr__(self):
+        return "User<gid=%d, login=%s>" % (self.gid, self.login)

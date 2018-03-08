@@ -49,12 +49,13 @@ class AuthenticateHandler(MessageHandler):
 class AddContactHandler(MessageHandler):
     """ Обработчик ответа добавленного контакта """
     def run(self, client, command, response):
-        if response and response['response'] == 200:
-            contact = command['contact']
-            session = sessionmaker(bind=self.db_engine)()
-            db_contact = session.query(SQLContact).filter_by(login=client.login).filter_by(contact=contact).first()
-            if db_contact:
-                pass
+        contact = command['contact']
+        session = sessionmaker(bind=self.db_engine)()
+        db_contact = session.query(SQLContact).filter_by(login=client.login).filter_by(contact=contact).first()
+        if db_contact:
+            pass
+
+        if response and response['response'] == 200 or response is None:
             db_contact = SQLContact(login=client.login, contact=contact)
             session.add(db_contact)
             session.commit()
@@ -79,3 +80,15 @@ class ProbeHandler(MessageHandler):
     def run(self, client, command, response):
         presence = PresenceMessage(client.login, 'online')
         client.send_message(presence)
+
+
+class TextMessageHandler(MessageHandler):
+    """ Обработчик текстовых сообщений """
+    def run(self, client, command, response):
+        sender = command['from']
+        receiver = command['to']
+        message = command['message']
+        session = sessionmaker(bind=self.db_engine)()
+        db_message = SQLMessage(user=client.login, u_from=sender, u_to=receiver, message=message)
+        session.add(db_message)
+        session.commit()

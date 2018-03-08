@@ -115,3 +115,14 @@ class Server(object):
             'add_contact': AddContactMessageHandler,
             'del_contact': DelContactMessageHandler,
         })
+
+    def get_online_user_by_login(self, login):
+        """
+        Получение пользователя по логину, если он онлайн
+        :param login: str
+        :return: User
+        """
+        for sock, user in self.users.items():
+            if user.login == login:
+                return user
+        return None

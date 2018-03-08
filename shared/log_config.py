@@ -10,7 +10,6 @@ def log(func):
     """ Логирует вызовы к функциям """
     @wraps(func)
     def wrapper(*args, **kwargs):
-        print(dir(func))
         logger = logging.getLogger('server_decorated')
 
         all_args = []
