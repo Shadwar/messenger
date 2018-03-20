@@ -4,6 +4,7 @@ import select
 import queue
 import json
 import logging
+import threading
 from time import sleep
 
 from server.file_storage import FileStorage
@@ -15,6 +16,42 @@ from server.message_handlers import *
 
 
 logger = logging.getLogger('server')
+server_users_lock = threading.Lock()
+server_socket_lock = threading.Lock()
+
+
+def accept_users(ssock, users):
+    """ Отдельным потоком добавляем пользователей на сервер """
+    global server_socket_lock
+    global server_users_lock
+
+    while True:
+        server_socket_lock.acquire(blocking=True)
+        try:
+            sock, _ = ssock.accept()
+            sock.setblocking(False)
+            user = User(sock)
+
+            server_users_lock.acquire(blocking=True)
+            users[sock] = user
+            server_users_lock.release()
+
+            user.send_message(WelcomeMessage())
+        except BlockingIOError:
+            pass
+        server_socket_lock.release()
+        sleep(0.05)
+
+
+def send_to_user(user):
+    """ Обработка сокетов на запись """
+    while True:
+        try:
+            message = user.send_messages.get()
+        except queue.Empty:
+            break
+        else:
+            user.sock.send(bytes(message))
 
 
 class Server(object):
@@ -31,9 +68,11 @@ class Server(object):
         """ Запуск сервера
         """
         logger.info('Запуск сервера')
-        while True:
-            self.accept_users()
 
+        accept_thread = threading.Thread(target=accept_users, args=(self.socket, self.users))
+        accept_thread.start()
+
+        while True:
             user_sockets = [sock for sock in self.users.keys()]
             read_sockets, write_sockets, _ = select.select(user_sockets, user_sockets, [], 0)
 
@@ -42,22 +81,10 @@ class Server(object):
 
             for sock in write_sockets:
                 if sock in self.users:
-                    self.send_to_user(self.users[sock])
+                    threading.Thread(target=send_to_user, args=(self.users[sock],)).start()
 
             self.handle()
             sleep(0.05)
-
-    def accept_users(self):
-        """ Подключение нового пользователя к серверу
-        """
-        try:
-            sock, _ = self.socket.accept()
-            sock.setblocking(False)
-            user = User(sock)
-            self.users[sock] = user
-            user.send_message(WelcomeMessage())
-        except BlockingIOError:
-            pass
 
     def recv_from_user(self, user):
         """ Обработка сокетов на чтение """
@@ -72,15 +99,6 @@ class Server(object):
         else:
             for command in self.parse_raw_received(raw_data.decode()):
                 user.recv_message(command)
-
-    def send_to_user(self, user):
-        """ Обработка сокетов на запись """
-        try:
-            message = user.send_messages.get_nowait()
-        except queue.Empty:
-            pass
-        else:
-            user.sock.send(bytes(message))
 
     @classmethod
     def create_socket(cls, ip, port):

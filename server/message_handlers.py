@@ -49,6 +49,7 @@ class AuthenticateMessageHandler(MessageHandler):
             user.gid = db_user.gid
             user.login = login
             user.send_message(Response(202, command['id']))
+        session.close()
 
 
 class QuitMessageHandler(MessageHandler):
@@ -104,6 +105,7 @@ class TextMessageHandler(MessageHandler):
             session.add(db_message)
             session.commit()
 
+        session.close()
         user.send_message(Response(202, command['id']))
 
 
@@ -118,6 +120,7 @@ class ChatJoinMessageHandler(MessageHandler):
         db_chat_user = SQLUserChat(user=user.gid, chat=chat.gid)
         session.add(db_chat_user)
         session.commit()
+        session.close()
         user.send_message(Response(202, command['id']))
 
 
@@ -130,6 +133,7 @@ class ChatLeaveMessageHandler(MessageHandler):
         chat.users.remove(user)
         session = sessionmaker(bind=self.db_engine)()
         session.query(SQLUserChat).filter_by(chat=chat.gid).filter_by(user.user.gid).delete()
+        session.close()
         user.send_message(Response(202, command[id]))
 
 
@@ -156,6 +160,7 @@ class ChatCreateMessageHandler(MessageHandler):
             session.commit()
 
             user.send_message(Response(202, command['id']))
+        session.close()
 
 
 class GetContactsMessageHandler(MessageHandler):
@@ -167,6 +172,7 @@ class GetContactsMessageHandler(MessageHandler):
             contact = session.query(SQLUser).filter_by(gid=db_c.contact).first()
             contact_message = ContactMessage(contact.login)
             user.send_message(contact_message)
+        session.close()
 
 
 class AddContactMessageHandler(MessageHandler):
@@ -191,6 +197,7 @@ class AddContactMessageHandler(MessageHandler):
                     other.send_message(command)
         else:
             user.send_message(ErrorResponse(400, command['id'], message='Такой пользователь не найден.'))
+        session.close()
 
 
 class DelContactMessageHandler(MessageHandler):
@@ -205,6 +212,7 @@ class DelContactMessageHandler(MessageHandler):
                 )
         )
         user.send_message(Response(202, command['id']))
+        session.close()
 
 
 class GetTextMessagesHandler(MessageHandler):
@@ -229,3 +237,4 @@ class GetTextMessagesHandler(MessageHandler):
                     db_sender = session.query(SQLUser).filter_by(gid=sender_gid).first()
                     db_receiver = session.query(SQLUser).filter_by(gid=receiver_gid).first()
                     user.send_message(TextMessage(db_sender.login, db_receiver.login, db_message.message))
+        session.close()

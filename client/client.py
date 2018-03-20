@@ -4,6 +4,7 @@ import sys
 import logging
 import select
 import queue
+import threading
 from time import sleep
 
 from PyQt5.QtGui import QStandardItemModel
@@ -14,16 +15,34 @@ from shared.messages import *
 
 logger = logging.getLogger('client')
 
-class ClientCommandHandler(object):
-    """ Обработчик команд, поступивших от сервера """
-    def __init__(self, name, sock):
-        self.name = name
-        self.socket = sock
+client_sended_messages_lock = threading.Lock()
 
-    def handle(self, command):
-        """ Обработка команд """
-        if command['action'] == 'probe':
-            self.socket.send(bytes(PresenceMessage('ivan', "I'm here")))
+
+def handle_commands(client, recv_messages, sended_messages):
+    """ Обработка входящих команд """
+    global client_sended_messages_lock
+
+    while True:
+        try:
+            message = recv_messages.get()
+        except queue.Empty:
+            pass
+        except KeyboardInterrupt:
+            break
+        else:
+            response = None
+            if 'origin' in message:
+                response = message
+
+                client_sended_messages_lock.acquire(blocking=True)
+                message = json.loads(bytes(sended_messages[response['origin']]).decode())
+                del sended_messages[response['origin']]
+                client_sended_messages_lock.release()
+
+            action = message['action']
+            if action in client.handlers:
+                client.handlers[action]().run(client, message, response)
+        sleep(0.1)
 
 
 class Client(object):
@@ -48,6 +67,9 @@ class Client(object):
         """ Запуск клиента, подключение к серверу, запуск цикла обработки сообщений
         """
         logger.info('Запуск клиента')
+
+        threading.Thread(target=handle_commands, args=(self, self.recv_messages, self.sended_messages)).start()
+
         while True:
             read_s, write_s, _ = select.select([self.socket], [self.socket], [], 0)
 
@@ -69,24 +91,10 @@ class Client(object):
                 else:
                     self.socket.send(bytes(message))
 
-            self.handle()
             sleep(0.1)
 
     def handle(self):
         """ Обработка входящих сообщений """
-        try:
-            message = self.recv_messages.get_nowait()
-        except queue.Empty:
-            pass
-        else:
-            response = None
-            if 'origin' in message:
-                response = message
-                message = json.loads(bytes(self.sended_messages[response['origin']]).decode())
-                del self.sended_messages[response['origin']]
-            action = message['action']
-            if action in self.handlers:
-                self.handlers[action]().run(self, message, response)
 
     def send_message(self, message):
         self.message_id += 1
@@ -122,60 +130,3 @@ class Client(object):
 
         print(commands)
         return commands
-
-
-    #     if self.authenticate():
-    #         print('Command list:')
-    #         print('c - create chat. (c chat_name)')
-    #         print('j - join chat. (j chat_name)')
-    #         print('l - leave chat. (l chat_name)')
-    #         print('s - send message. (s receiver message)')
-    #         print('q - quit from server. (q)')
-    #         while True:
-    #             user_command = input('next command (enter to pass): ').split()
-    #             user_command.append(None)
-    #
-    #             if user_command[0] == 'q':
-    #                 send_command = QuitMessage()
-    #             elif user_command[0] == 'c':
-    #                 if user_command[1][0] != '#':
-    #                     user_command[1] = '#' + user_command[1]
-    #                 send_command = ChatCreateMessage(user_command[1])
-    #             elif user_command[0] == 'j':
-    #                 send_command = ChatJoinMessage(user_command[1])
-    #             elif user_command[0] == 'l':
-    #                 send_command = ChatLeaveMessage(user_command[1])
-    #             elif user_command[0] == 's':
-    #                 send_command = TextMessage(self.user_name, user_command[1], user_command[2])
-    #             else:
-    #                 send_command = PresenceMessage(self.user_name, 'Online')
-    #
-    #             self.socket.send(bytes(send_command))
-    #
-    #             if user_command[0] == 'q':
-    #                 sys.exit()
-    #
-    #             raw_data = self.socket.recv(1024)
-    #             print(raw_data)
-    #             command = json.loads(raw_data.decode())
-    #             if 'action' in command:
-    #                 self.handler.handle(command)
-    #
-    #
-    # def authenticate(self):
-    #     """ Аутентификация пользователя
-    #         :return: True|False - в зависимости от успеха
-    #     """
-    #     while True:
-    #         user_name = input('username: ')
-    #         password = input('password: ')
-    #         auth_command = AuthenticateMessage(user_name, password)
-    #         self.socket.send(bytes(auth_command))
-    #         response = json.loads(self.socket.recv(1024).decode())
-    #         success = response.get('response', 402) == 202
-    #         print(response)
-    #         if success:
-    #             self.user_name = user_name
-    #             self.password = password
-    #             break
-    #     return success

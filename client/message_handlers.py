@@ -45,6 +45,7 @@ class AuthenticateHandler(MessageHandler):
 
                 client.send_message(get_messages)
 
+            session.close()
             get_contacts = GetContactsMessage()
             client.send_message(get_contacts)
         else:
@@ -66,6 +67,8 @@ class AddContactHandler(MessageHandler):
             session.commit()
             client.signals['add_contact'].emit(contact)
 
+        session.close()
+
 
 class ContactHandler(MessageHandler):
     """ Обработчик полученных контактов """
@@ -81,6 +84,7 @@ class ContactHandler(MessageHandler):
         get_messages = GetTextMessages(db_contact.contact)
         client.send_message(get_messages)
         client.signals['add_contact'].emit(contact)
+        session.close()
 
 
 class ProbeHandler(MessageHandler):
@@ -102,3 +106,4 @@ class TextMessageHandler(MessageHandler):
         session.commit()
         chat = db_message.u_from if db_message.u_from != client.login else db_message.u_to
         client.signals['text_message'].emit(chat, db_message.u_from, message)
+        session.close()
