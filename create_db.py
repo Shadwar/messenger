@@ -18,7 +18,8 @@ def server_db():
       create table users (
         gid integer primary key autoincrement,
         login varchar(30) UNIQUE,
-        password varchar(30)
+        password varchar(30),
+        public_key varchar(1024)
       )
     """)
 
@@ -73,8 +74,19 @@ def user_db():
     cursor = connection.cursor()
 
     # Удаление старых таблиц
+    cursor.execute('drop table if exists users')
     cursor.execute('drop table if exists messages')
     cursor.execute('drop table if exists contacts')
+
+    cursor.execute("""
+      create table users (
+        gid integer primary key autoincrement,
+        login varchar(30),
+        password varchar(64),
+        private_key varchar(1024),
+        public_key varchar(1024)
+      )
+    """)
 
     cursor.execute("""
       create table messages (
@@ -91,7 +103,8 @@ def user_db():
       create table contacts (
         gid integer primary key autoincrement,
         login varchar(30),
-        contact varchar(30)
+        contact varchar(30),
+        public_key varchar(1024)
       )
     """)
 

@@ -1,3 +1,4 @@
+import base64
 import socket
 import json
 import sys
@@ -5,11 +6,13 @@ import logging
 import select
 import queue
 import threading
+import rsa
 from time import sleep
 
 from PyQt5.QtGui import QStandardItemModel
 
 from client.message_handlers import *
+from shared.generate import get_hash
 from shared.responses import *
 from shared.messages import *
 
@@ -62,6 +65,8 @@ class Client(object):
         self.send_messages = queue.Queue()
         self.sended_messages = dict()
         self.message_id = 0
+        self.public_key = None
+        self.private_key = None
 
     def run(self):
         """ Запуск клиента, подключение к серверу, запуск цикла обработки сообщений
@@ -130,3 +135,47 @@ class Client(object):
 
         print(commands)
         return commands
+
+    def get_public(self, login, password):
+        """
+        Создание нового аккаунта и ключей шифрования
+        :param login:
+        :param password:
+        :return:
+        """
+        db_engine = create_engine('sqlite:///client.db')
+        session = sessionmaker(bind=db_engine)()
+        hashed_password = get_hash(login, password)
+
+        db_user = session.query(SQLUser).filter_by(login=login).filter_by(password=hashed_password).first()
+        if db_user:
+            pass
+        else:
+            (public_key, private_key) = rsa.newkeys(512)
+            db_user = SQLUser(login=login, password=hashed_password, public_key=public_key.save_pkcs1('DER').hex(), private_key=private_key.save_pkcs1('DER').hex())
+            session.add(db_user)
+            session.commit()
+
+        self.private_key = db_user.private_key
+        self.public_key = db_user.public_key
+
+        session.close()
+        return self.public_key
+
+    def send_text_message(self, contact, message):
+        """
+        Отправка и шифрование текстового сообщения
+        :param contact:
+        :param message:
+        :return:
+        """
+        db_engine = create_engine('sqlite:///client.db')
+        session = sessionmaker(bind=db_engine)()
+        db_contact = session.query(SQLContact).filter_by(login=self.login).filter_by(contact=contact).first()
+        if db_contact:
+            public_key = rsa.PublicKey.load_pkcs1(bytes.fromhex(db_contact.public_key), format='DER')
+            crypted_text = rsa.encrypt(message.encode(), public_key)
+            text_message = TextMessage(self.login, contact, crypted_text.hex())
+            self.signals['text_message'].emit(contact, self.login, message)
+            self.send_message(text_message)
+        session.close()

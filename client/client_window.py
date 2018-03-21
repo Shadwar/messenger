@@ -44,13 +44,15 @@ class ClientWindow(QMainWindow):
         """ Обработчик нажатия кнопки логина """
         login = self.ui.login_input.text()
         password = self.ui.password_input.text()
-        message = AuthenticateMessage(login, password)
-        self.client.send_message(message)
+        public_key = self.client.get_public(login, password)
+        if public_key:
+            message = AuthenticateMessage(login, password, public_key)
+            self.client.send_message(message)
 
     def add_contact_clicked(self):
         """ Обработчик нажатия кнопки добавления нового контакта """
         contact = self.ui.add_contact_input.text()
-        message = AddContactMessage(contact)
+        message = AddContactMessage(contact, self.client.public_key)
         self.client.send_message(message)
 
     def add_contact_signal(self, contact):
@@ -84,8 +86,7 @@ class ClientWindow(QMainWindow):
         if self.selected_contact:
             text = self.ui.text_input.toPlainText()
             self.ui.text_input.setPlainText('')
-            message = TextMessage(self.client.login, self.selected_contact, text)
-            self.client.send_message(message)
+            self.client.send_text_message(self.selected_contact, text)
 
     def item_contact_clicked(self, item):
         """ Обработчик выбора контакта в списке контактов """

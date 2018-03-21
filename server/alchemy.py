@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, Unicode, UniqueConstraint, ForeignKey, create_engine
+from sqlalchemy import Column, Integer, Unicode, UniqueConstraint, ForeignKey, create_engine, LargeBinary
 from sqlalchemy.orm import sessionmaker, relationship, defer, load_only
 from sqlalchemy.ext.declarative import declarative_base
 
@@ -12,11 +12,12 @@ class SQLUser(SQLBase):
     gid = Column(Integer(), primary_key=True)
     login = Column(Unicode())
     password = Column(Unicode())
+    public_key = Column(Unicode())
 
     check_1 = UniqueConstraint('login')
 
     def __repr__(self):
-        return 'SQLUser<gid = %d, login = %s, password=%s>' % (self.gid, self.login, self.password)
+        return 'SQLUser<gid = %d, login = %s, password=%s, public_key=%s>' % (self.gid, self.login, self.password, self.public_key)
 
 
 class SQLMessage(SQLBase):

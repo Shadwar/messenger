@@ -10,6 +10,7 @@ class User(object):
         self.gid = None
         self.login = None
         self.chats = []
+        self.public_key = None
 
     def send_message(self, message):
         """ Добавить пользователю сообщение на отправку """

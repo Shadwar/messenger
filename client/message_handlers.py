@@ -1,4 +1,5 @@
 import abc
+import rsa
 
 from PyQt5.QtGui import QStandardItem
 
@@ -61,8 +62,9 @@ class AddContactHandler(MessageHandler):
         if db_contact:
             pass
 
-        if response and response['response'] == 200 or response is None:
-            db_contact = SQLContact(login=client.login, contact=contact)
+        if response and response['response'] == 200:
+            public_key = response['alert']
+            db_contact = SQLContact(login=client.login, contact=contact, public_key=public_key)
             session.add(db_contact)
             session.commit()
             client.signals['add_contact'].emit(contact)
@@ -74,11 +76,12 @@ class ContactHandler(MessageHandler):
     """ Обработчик полученных контактов """
     def run(self, client, command, response):
         contact = command['contact']
+        public_key = command['public_key']
         session = sessionmaker(bind=self.db_engine)()
         db_contact = session.query(SQLContact).filter_by(login=client.login).filter_by(contact=contact).first()
         if db_contact:
             return
-        db_contact = SQLContact(login=client.login, contact=contact)
+        db_contact = SQLContact(login=client.login, contact=contact, public_key=public_key)
         session.add(db_contact)
         session.commit()
         get_messages = GetTextMessages(db_contact.contact)
@@ -96,14 +99,16 @@ class ProbeHandler(MessageHandler):
 class TextMessageHandler(MessageHandler):
     """ Обработчик текстовых сообщений """
     def run(self, client, command, response):
-        sender = command['from']
-        receiver = command['to']
-        message = command['message']
-        m_time = command['time']
-        session = sessionmaker(bind=self.db_engine)()
-        db_message = SQLMessage(user=client.login, u_from=sender, u_to=receiver, message=message, time=m_time)
-        session.add(db_message)
-        session.commit()
-        chat = db_message.u_from if db_message.u_from != client.login else db_message.u_to
-        client.signals['text_message'].emit(chat, db_message.u_from, message)
-        session.close()
+        if response is None:
+            sender = command['from']
+            receiver = command['to']
+            message = command['message']
+            message = rsa.decrypt(bytes.fromhex(message), rsa.key.PrivateKey.load_pkcs1(bytes.fromhex(client.private_key), format='DER'))
+            m_time = command['time']
+            session = sessionmaker(bind=self.db_engine)()
+            db_message = SQLMessage(user=client.login, u_from=sender, u_to=receiver, message=message.decode(), time=m_time)
+            session.add(db_message)
+            session.commit()
+            chat = db_message.u_from if db_message.u_from != client.login else db_message.u_to
+            client.signals['text_message'].emit(chat, db_message.u_from, message.decode())
+            session.close()

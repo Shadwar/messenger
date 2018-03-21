@@ -1,6 +1,8 @@
 import abc
 
 from server.chat import Chat
+from shared.generate import get_hash
+from shared.lib import login_required
 from shared.responses import *
 from shared.messages import *
 from server.alchemy import *
@@ -23,13 +25,16 @@ class AuthenticateMessageHandler(MessageHandler):
     def run(self, server, user, command):
         login = command['user']['account_name']
         password = command['user']['password']
+        public_key = command['user']['public_key']
+        hashed_password = get_hash(login, password)
 
         session = sessionmaker(bind=self.db_engine)()
         db_user = session.query(SQLUser).filter_by(login=login).first()
         if db_user:
-            if db_user.password == password:
+            if db_user.password == hashed_password:
                 user.gid = db_user.gid
                 user.login = login
+                user.public_key = db_user.public_key
                 # Загрузка всех чатов, в которых участвует пользователь
                 db_user_chats = session.query(SQLUserChat).filter_by(user=user.gid).all()
                 for uc in db_user_chats:
@@ -43,17 +48,19 @@ class AuthenticateMessageHandler(MessageHandler):
             else:
                 user.send_message(Response(402, command['id']))
         else:
-            db_user = SQLUser(login=login, password=password)
+            db_user = SQLUser(login=login, password=hashed_password, public_key=public_key)
             session.add(db_user)
             session.commit()
             user.gid = db_user.gid
             user.login = login
+            user.public_key = db_user.public_key
             user.send_message(Response(202, command['id']))
         session.close()
 
 
 class QuitMessageHandler(MessageHandler):
     """ Выход пользователя """
+    @login_required
     def run(self, server, user, command):
         # TODO: отправить статус оффлайн всем пользователям,
         # у которых данный пользователь в контакт-листе
@@ -62,12 +69,14 @@ class QuitMessageHandler(MessageHandler):
 
 class PresenceMessageHandler(MessageHandler):
     """ Обработка сообщения о нахождении пользователя на сервере"""
+    @login_required
     def run(self, server, user, command):
         user.send_message(Response(200, command['id']))
 
 
 class TextMessageHandler(MessageHandler):
     """ Обработка текстового сообщения """
+    @login_required
     def run(self, server, user, command):
         sender = command['from']
         receiver = command['to']
@@ -110,6 +119,7 @@ class TextMessageHandler(MessageHandler):
 
 
 class ChatJoinMessageHandler(MessageHandler):
+    @login_required
     def run(self, server, user, command):
         """ Подключение к чату """
         chat_name = command['room']
@@ -125,6 +135,7 @@ class ChatJoinMessageHandler(MessageHandler):
 
 
 class ChatLeaveMessageHandler(MessageHandler):
+    @login_required
     def run(self, server, user, command):
         """ Отключение от чата """
         """ TODO: Отправить другим пользователям чата сообщение об отключении данного пользователя"""
@@ -139,6 +150,7 @@ class ChatLeaveMessageHandler(MessageHandler):
 
 class ChatCreateMessageHandler(MessageHandler):
     """ Создание нового чата, текущий пользователь сразу добавляется """
+    @login_required
     def run(self, server, user, command):
         session = sessionmaker(bind=self.db_engine)()
         chat_name = command['room']
@@ -165,18 +177,20 @@ class ChatCreateMessageHandler(MessageHandler):
 
 class GetContactsMessageHandler(MessageHandler):
     """ Отправить все контакты пользователю """
+    @login_required
     def run(self, server, user, command):
         session = sessionmaker(bind=self.db_engine)()
         db_contacts = session.query(SQLContact).filter_by(user=user.gid).all()
         for db_c in db_contacts:
             contact = session.query(SQLUser).filter_by(gid=db_c.contact).first()
-            contact_message = ContactMessage(contact.login)
+            contact_message = ContactMessage(contact.login, contact.public_key)
             user.send_message(contact_message)
         session.close()
 
 
 class AddContactMessageHandler(MessageHandler):
     """ Добавить контакт пользователя """
+    @login_required
     def run(self, server, user, command):
         session = sessionmaker(bind=self.db_engine)()
         contact = session.query(SQLUser).filter_by(login=command['contact']).first()
@@ -190,10 +204,10 @@ class AddContactMessageHandler(MessageHandler):
                 other_contact = SQLContact(user=contact.gid, contact=user.gid)
                 session.add(other_contact)
                 session.commit()
-                user.send_message(Response(200, command['id']))
+                user.send_message(AlertResponse(200, command['id'], contact.public_key))
                 other = server.get_online_user_by_login(contact.login)
                 if other:
-                    command = AddContactMessage(user.login)
+                    command = ContactMessage(user.login, user.public_key)
                     other.send_message(command)
         else:
             user.send_message(ErrorResponse(400, command['id'], message='Такой пользователь не найден.'))
@@ -202,6 +216,7 @@ class AddContactMessageHandler(MessageHandler):
 
 class DelContactMessageHandler(MessageHandler):
     """ Удалить контакт пользователя """
+    @login_required
     def run(self, server, user, command):
         session = sessionmaker(bind=self.db_engine)()
         db_other = session.query(SQLUser).filter_by(name=command['name']).first()
@@ -217,6 +232,7 @@ class DelContactMessageHandler(MessageHandler):
 
 class GetTextMessagesHandler(MessageHandler):
     """ Запрос на все сообщения для определенного контакта """
+    @login_required
     def run(self, server, user, command):
         contact = command['contact']
         last_time = int(command['time'])

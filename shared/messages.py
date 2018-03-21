@@ -23,13 +23,14 @@ class WelcomeMessage(Message):
 
 class AuthenticateMessage(Message):
     """ Запрос пользователя об аутентификации """
-    def __init__(self, login, password):
+    def __init__(self, login, password, public_key):
         super().__init__()
         self.data.update({
             'action': 'authenticate',
             'user': {
                 'account_name': login,
-                'password': password
+                'password': password,
+                'public_key': public_key
             }
         })
 
@@ -105,21 +106,23 @@ class GetContactsMessage(Message):
 
 class ContactMessage(Message):
     """ Контакт пользователя """
-    def __init__(self, login):
+    def __init__(self, login, public_key):
         super().__init__()
         self.data.update({
             'action': 'contact_list',
-            'contact': login
+            'contact': login,
+            'public_key': public_key
         })
 
 
 class AddContactMessage(Message):
     """ Добавление контакта в список контактов пользователя """
-    def __init__(self, login):
+    def __init__(self, login, public_key):
         super().__init__()
         self.data.update({
             'action': 'add_contact',
-            'contact': login
+            'contact': login,
+            'public_key': public_key
         })
 
 
