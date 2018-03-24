@@ -173,6 +173,10 @@ class Client(object):
         session = sessionmaker(bind=db_engine)()
         db_contact = session.query(SQLContact).filter_by(login=self.login).filter_by(contact=contact).first()
         if db_contact:
+            db_message = SQLMessage(user=self.login, u_from=self.login, u_to=db_contact.contact, message=message, time=int(time.time()))
+            session.add(db_message)
+            session.commit()
+
             public_key = rsa.PublicKey.load_pkcs1(bytes.fromhex(db_contact.public_key), format='DER')
             crypted_text = rsa.encrypt(message.encode(), public_key)
             text_message = TextMessage(self.login, contact, crypted_text.hex())
