@@ -244,8 +244,7 @@ class GetTextMessagesHandler(MessageHandler):
             db_contact = session.query(SQLUser).filter_by(login=contact).first()
             if db_contact:
                 db_messages = session.query(SQLMessage)\
-                    .filter(or_(SQLMessage.u_from == user.gid, SQLMessage.u_to == user.gid))\
-                    .filter(or_(SQLMessage.u_from == db_contact.gid, SQLMessage.u_to == db_contact.gid))\
+                    .filter(SQLMessage.u_to == user.gid)\
                     .filter(SQLMessage.time >= last_time).all()
                 for db_message in db_messages:
                     sender_gid = db_message.u_from

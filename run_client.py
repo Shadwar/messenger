@@ -1,4 +1,7 @@
+import sqlite3
+import sqlalchemy.sql.default_comparator
 import sys
+from pathlib import Path
 from PyQt5.QtWidgets import QApplication
 from PyQt5.QtCore import QThread, pyqtSignal
 from client.client import Client
@@ -19,12 +22,50 @@ class ClientThread(QThread):
         self.client.signals['add_contact'] = self.add_contact
         self.client.signals['text_message'] = self.text_message
 
-
     def __del__(self):
         self.wait()
 
     def run(self):
         self.client.run()
+
+
+def create_db():
+    db_file = Path('client.db')
+    if db_file.is_file():
+        return
+    connection = sqlite3.connect('client.db')
+    cursor = connection.cursor()
+
+    cursor.execute("""
+      create table users (
+        gid integer primary key autoincrement,
+        login varchar(30),
+        password varchar(64),
+        private_key varchar(1024),
+        public_key varchar(1024)
+      )
+    """)
+
+    cursor.execute("""
+      create table messages (
+        gid integer primary key autoincrement,
+        user varchar(30),
+        u_from varchar(30),
+        u_to varchar(30),
+        time integer,
+        message text
+      )
+    """)
+
+    cursor.execute("""
+      create table contacts (
+        gid integer primary key autoincrement,
+        login varchar(30),
+        contact varchar(30),
+        public_key varchar(1024)
+      )
+    """)
+    connection.commit()
 
 
 if __name__ == '__main__':
@@ -41,6 +82,8 @@ if __name__ == '__main__':
     except Exception:
         port = 7777
 
+    create_db()
+
     app = QApplication(sys.argv)
     client = Client(addr, port)
     thr = ClientThread(client)
@@ -51,4 +94,4 @@ if __name__ == '__main__':
 
     thr.start()
 
-    exit(app.exec_())
+    sys.exit(app.exec_())
