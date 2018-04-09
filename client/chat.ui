@@ -14,34 +14,46 @@
    <string>Chat</string>
   </property>
   <widget class="QWidget" name="centralwidget">
+   <property name="styleSheet">
+    <string notr="true">background-color: rgb(76, 135, 202);</string>
+   </property>
    <widget class="QListView" name="contacts">
     <property name="geometry">
      <rect>
-      <x>5</x>
-      <y>10</y>
-      <width>251</width>
-      <height>501</height>
+      <x>10</x>
+      <y>70</y>
+      <width>280</width>
+      <height>480</height>
      </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">background-color: rgb(255, 255, 255);</string>
     </property>
    </widget>
    <widget class="QListView" name="chat">
     <property name="geometry">
      <rect>
-      <x>260</x>
+      <x>300</x>
       <y>10</y>
-      <width>531</width>
+      <width>491</width>
       <height>501</height>
      </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">background-color: rgb(255, 255, 255);</string>
     </property>
    </widget>
    <widget class="QPlainTextEdit" name="text_input">
     <property name="geometry">
      <rect>
-      <x>260</x>
+      <x>300</x>
       <y>517</y>
-      <width>441</width>
+      <width>401</width>
       <height>71</height>
      </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">background-color: rgb(255, 255, 255);</string>
     </property>
    </widget>
    <widget class="QPushButton" name="send_button">
@@ -53,6 +65,9 @@
       <height>71</height>
      </rect>
     </property>
+    <property name="styleSheet">
+     <string notr="true">background-color: rgba(50, 127, 198, 100);font: 19pt;</string>
+    </property>
     <property name="text">
      <string>Send</string>
     </property>
@@ -60,11 +75,14 @@
    <widget class="QPushButton" name="add_contact_button">
     <property name="geometry">
      <rect>
-      <x>70</x>
-      <y>550</y>
+      <x>170</x>
+      <y>560</y>
       <width>121</width>
       <height>31</height>
      </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">background-color: rgba(50, 127, 198, 100);</string>
     </property>
     <property name="text">
      <string>Добавить контакт</string>
@@ -74,10 +92,55 @@
     <property name="geometry">
      <rect>
       <x>10</x>
-      <y>520</y>
-      <width>241</width>
-      <height>27</height>
+      <y>560</y>
+      <width>151</width>
+      <height>31</height>
      </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">background-color: rgb(255, 255, 255);</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="user_name">
+    <property name="geometry">
+     <rect>
+      <x>70</x>
+      <y>10</y>
+      <width>221</width>
+      <height>51</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">font: 19pt;</string>
+    </property>
+    <property name="text">
+     <string>UserName</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="user_image">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>10</y>
+      <width>50</width>
+      <height>50</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string/>
+    </property>
+    <property name="icon">
+     <iconset>
+      <normaloff>assets/no_user_avatar.png</normaloff>assets/no_user_avatar.png</iconset>
+    </property>
+    <property name="iconSize">
+     <size>
+      <width>50</width>
+      <height>50</height>
+     </size>
+    </property>
+    <property name="flat">
+     <bool>true</bool>
     </property>
    </widget>
   </widget>
