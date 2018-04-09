@@ -1,5 +1,7 @@
-from PyQt5.QtGui import QStandardItemModel, QStandardItem, QColor
-from PyQt5.QtWidgets import QMainWindow
+from PIL import Image
+from PIL.ImageQt import ImageQt
+from PyQt5.QtGui import QStandardItemModel, QStandardItem, QColor, QPixmap, QIcon
+from PyQt5.QtWidgets import QMainWindow, QFileDialog
 from PyQt5.QtCore import pyqtSignal
 
 from client.login_ui import Ui_login_window as LoginUI
@@ -35,10 +37,13 @@ class ClientWindow(QMainWindow):
         self.ui = ChatUI()
         self.ui.setupUi(self)
         self.ui.retranslateUi(self)
-        self.ui.add_contact_button.pressed.connect(self.add_contact_clicked)
         self.client.contacts = QStandardItemModel(self.ui.contacts)
+        self.ui.add_contact_button.pressed.connect(self.add_contact_clicked)
         self.ui.contacts.doubleClicked.connect(self.item_contact_clicked)
         self.ui.send_button.pressed.connect(self.send_text_message)
+        self.ui.user_image.pressed.connect(self.change_user_image)
+        # TODO: Загрузить изображение пользователя с базы данных
+        # TODO: Запростить изображение пользователя с сервера
 
     def login_clicked(self):
         """ Обработчик нажатия кнопки логина """
@@ -97,3 +102,17 @@ class ClientWindow(QMainWindow):
         contact = item.data()
         self.selected_contact = contact
         self.ui.chat.setModel(self.client.messages[contact])
+
+    def change_user_image(self):
+        """ Изменение картинки пользователя """
+        filename = QFileDialog.getOpenFileName(self, 'Выбрать аватарку', '/home')[0]
+        if filename:
+            image = Image.open(filename)
+            pixmap = QPixmap.fromImage(ImageQt(image.convert('RGBA')))
+            icon = QIcon()
+            icon.addPixmap(pixmap, QIcon.Normal, QIcon.Off)
+            self.ui.user_image.setIcon(icon)
+
+        # TODO: Диалог откадрирования файла?
+        # TODO: Сохранить файл в базу данных
+        # TODO: Отправить файл на сервер
