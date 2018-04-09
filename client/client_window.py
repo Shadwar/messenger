@@ -1,4 +1,4 @@
-from PyQt5.QtGui import QStandardItemModel, QStandardItem
+from PyQt5.QtGui import QStandardItemModel, QStandardItem, QColor
 from PyQt5.QtWidgets import QMainWindow
 from PyQt5.QtCore import pyqtSignal
 
@@ -76,6 +76,10 @@ class ClientWindow(QMainWindow):
         message_item = QStandardItem(sender + ': ' + message)
         message_item.setCheckable(False)
         message_item.setEditable(False)
+        if sender == self.client.login:
+            message_item.setBackground(QColor().fromRgb(255, 100, 255, 30))
+        else:
+            message_item.setBackground(QColor().fromRgb(100, 255, 255, 30))
         self.client.messages[chat].appendRow(message_item)
         #
         # if self.selected_contact == chat:
