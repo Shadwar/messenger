@@ -112,6 +112,17 @@ class ClientWindow(QMainWindow):
         if filename:
             file = open(filename, 'rb')
             image = Image.open(file)
+
+            x_center = image.width // 2
+            y_center = image.height // 2
+
+            size = image.height if image.width > image.height else image.width
+            x_left = x_center - size // 2
+            x_right = x_center + size // 2
+            y_top = y_center - size // 2
+            y_bottom = y_center + size // 2
+            image = image.crop((x_left, y_top, x_right, y_bottom))
+
             image = image.resize((50, 50), Image.NEAREST)
             pixmap = QPixmap.fromImage(ImageQt(image.convert('RGBA')))
             icon = QIcon()
