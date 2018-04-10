@@ -4,7 +4,6 @@ from PIL import Image
 from PIL.ImageQt import ImageQt
 from PyQt5.QtGui import QStandardItemModel, QStandardItem, QColor, QPixmap, QIcon
 from PyQt5.QtWidgets import QMainWindow, QFileDialog
-from PyQt5.QtCore import pyqtSignal
 
 from client.login_ui import Ui_login_window as LoginUI
 from client.chat_ui import Ui_chat_window as ChatUI
@@ -45,17 +44,14 @@ class ClientWindow(QMainWindow):
         self.ui.send_button.pressed.connect(self.send_text_message)
         self.ui.user_image.pressed.connect(self.change_user_image)
 
-        self.load_user_avatar()
+        self.client.load_user_avatar(self.ui.user_image)
         # TODO: Запростить изображение пользователя с сервера
 
     def login_clicked(self):
         """ Обработчик нажатия кнопки логина """
         login = self.ui.login_input.text()
         password = self.ui.password_input.text()
-        public_key = self.client.get_public(login, password)
-        if public_key:
-            message = AuthenticateMessage(login, password, public_key)
-            self.client.send_message(message)
+        self.client.authenticate(login, password)
 
     def add_contact_clicked(self):
         """ Обработчик нажатия кнопки добавления нового контакта """
@@ -128,16 +124,6 @@ class ClientWindow(QMainWindow):
             icon = QIcon()
             icon.addPixmap(pixmap, QIcon.Normal, QIcon.Off)
             self.ui.user_image.setIcon(icon)
-            self.client.save_user_avatar(open(filename, 'rb').read())
+            self.client.save_avatar(filename)
 
         # TODO: Отправить файл на сервер
-
-    def load_user_avatar(self):
-        """ Установка аватара пользователя, если он есть в базе данных """
-        avatar_data = self.client.get_user_avatar()
-        if avatar_data:
-            image = Image.open(io.BytesIO(avatar_data))
-            pixmap = QPixmap.fromImage(ImageQt(image.convert('RGBA')))
-            icon = QIcon()
-            icon.addPixmap(pixmap, QIcon.Normal, QIcon.Off)
-            self.ui.user_image.setIcon(icon)

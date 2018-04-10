@@ -1,29 +1,25 @@
-import base64
 import socket
 import json
-import sys
 import logging
 import select
 import queue
 import threading
-import rsa
 from time import sleep
 
-from PyQt5.QtGui import QStandardItemModel
+from sqlalchemy import create_engine
 
 from client.message_handlers import *
-from shared.generate import get_hash
-from shared.responses import *
-from shared.messages import *
 
 logger = logging.getLogger('client')
 
 client_sended_messages_lock = threading.Lock()
+client_db_lock = threading.Lock()
 
 
 def handle_commands(client, recv_messages, sended_messages):
     """ Обработка входящих команд """
     global client_sended_messages_lock
+    db_engine = create_engine('sqlite:///client.db')
 
     while True:
         try:
@@ -44,7 +40,7 @@ def handle_commands(client, recv_messages, sended_messages):
 
             action = message['action']
             if action in client.handlers:
-                client.handlers[action]().run(client, message, response)
+                client.handlers[action](db_engine).run(client, message, response)
         sleep(0.1)
 
 
@@ -113,6 +109,10 @@ class Client(object):
             'add_contact': AddContactHandler,
             'contact_list': ContactHandler,
             'msg': TextMessageHandler,
+            'save_avatar': SaveAvatarHandler,
+            'load_avatar': LoadAvatarHandler,
+            'authenticate_user': ClientAuthenticationHandler,
+            'send_message_to_server': SendMessageHandler
         })
         pass
 
@@ -136,72 +136,18 @@ class Client(object):
         print(commands)
         return commands
 
-    def get_public(self, login, password):
-        """
-        Создание нового аккаунта и ключей шифрования
-        :param login:
-        :param password:
-        :return:
-        """
-        db_engine = create_engine('sqlite:///client.db')
-        session = sessionmaker(bind=db_engine)()
-        hashed_password = get_hash(login, password)
-
-        db_user = session.query(SQLUser).filter_by(login=login).filter_by(password=hashed_password).first()
-        if db_user:
-            pass
-        else:
-            (public_key, private_key) = rsa.newkeys(512)
-            db_user = SQLUser(login=login, password=hashed_password, public_key=public_key.save_pkcs1('DER').hex(), private_key=private_key.save_pkcs1('DER').hex())
-            session.add(db_user)
-            session.commit()
-
-        self.private_key = db_user.private_key
-        self.public_key = db_user.public_key
-
-        session.close()
-        return self.public_key
+    def authenticate(self, login, password):
+        """ Создание нового аккаунта и ключей шифрования """
+        self.recv_messages.put({'action': 'authenticate_user', 'login': login, 'password': password, 'client': self})
 
     def send_text_message(self, contact, message):
-        """
-        Отправка и шифрование текстового сообщения
-        :param contact:
-        :param message:
-        :return:
-        """
-        db_engine = create_engine('sqlite:///client.db')
-        session = sessionmaker(bind=db_engine)()
-        db_contact = session.query(SQLContact).filter_by(login=self.login).filter_by(contact=contact).first()
-        if db_contact:
-            db_message = SQLMessage(user=self.login, u_from=self.login, u_to=db_contact.contact, message=message, time=int(time.time()))
-            session.add(db_message)
-            session.commit()
+        """ Отправка и шифрование текстового сообщения """
+        self.recv_messages.put({'action': 'send_message_to_server', 'contact': contact, 'message': message})
 
-            public_key = rsa.PublicKey.load_pkcs1(bytes.fromhex(db_contact.public_key), format='DER')
-            crypted_text = rsa.encrypt(message.encode(), public_key)
-            text_message = TextMessage(self.login, contact, crypted_text.hex())
-            self.signals['text_message'].emit(contact, self.login, message)
-            self.send_message(text_message)
-        session.close()
+    def save_avatar(self, filename):
+        """ Сохранение аватара пользователя в базу данных """
+        self.recv_messages.put({'action': 'save_avatar', 'filename': filename})
 
-    def save_user_avatar(self, image_data):
-        """ Сохранение аватара пользователя в базе данных """
-        db_engine = create_engine('sqlite:///client.db')
-        session = sessionmaker(bind=db_engine)()
-        db_user = session.query(SQLUser).filter_by(login=self.login).first()
-        if db_user:
-            db_user.avatar = image_data
-            session.add(db_user)
-            session.commit()
-        session.close()
-
-    def get_user_avatar(self):
-        """ Получение аватара пользователя из базы данных """
-        result = None
-        db_engine = create_engine('sqlite:///client.db')
-        session = sessionmaker(bind=db_engine)()
-        db_user = session.query(SQLUser).filter_by(login=self.login).first()
-        if db_user:
-            result = db_user.avatar
-        session.close()
-        return result
+    def load_user_avatar(self, container):
+        """ Установка аватара пользователя, если он есть в базе данных """
+        self.recv_messages.put({'action': 'load_avatar', 'container': container})
