@@ -183,3 +183,25 @@ class Client(object):
             self.signals['text_message'].emit(contact, self.login, message)
             self.send_message(text_message)
         session.close()
+
+    def save_user_avatar(self, image_data):
+        """ Сохранение аватара пользователя в базе данных """
+        db_engine = create_engine('sqlite:///client.db')
+        session = sessionmaker(bind=db_engine)()
+        db_user = session.query(SQLUser).filter_by(login=self.login).first()
+        if db_user:
+            db_user.avatar = image_data
+            session.add(db_user)
+            session.commit()
+        session.close()
+
+    def get_user_avatar(self):
+        """ Получение аватара пользователя из базы данных """
+        result = None
+        db_engine = create_engine('sqlite:///client.db')
+        session = sessionmaker(bind=db_engine)()
+        db_user = session.query(SQLUser).filter_by(login=self.login).first()
+        if db_user:
+            result = db_user.avatar
+        session.close()
+        return result

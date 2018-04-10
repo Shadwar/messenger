@@ -42,7 +42,8 @@ def create_db():
         login varchar(30),
         password varchar(64),
         private_key varchar(1024),
-        public_key varchar(1024)
+        public_key varchar(1024),
+        avatar blob
       )
     """)
 

@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, Unicode, UniqueConstraint, ForeignKey, create_engine, LargeBinary
+from sqlalchemy import Column, Integer, Unicode, UniqueConstraint, ForeignKey, create_engine, LargeBinary, BLOB
 from sqlalchemy.orm import sessionmaker, relationship
 from sqlalchemy.ext.declarative import declarative_base
 
@@ -14,6 +14,7 @@ class SQLUser(SQLBase):
     password = Column(Unicode())
     private_key = Column(Unicode())
     public_key = Column(Unicode())
+    avatar = Column(BLOB)
 
     def __repr__(self):
         return 'SQLUser<gid = %d, login = %s, public_key = %s>' % (self.gid, self.login, self.public_key)
