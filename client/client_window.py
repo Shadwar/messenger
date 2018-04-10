@@ -112,13 +112,13 @@ class ClientWindow(QMainWindow):
         if filename:
             file = open(filename, 'rb')
             image = Image.open(file)
+            image = image.resize((50, 50), Image.NEAREST)
             pixmap = QPixmap.fromImage(ImageQt(image.convert('RGBA')))
             icon = QIcon()
             icon.addPixmap(pixmap, QIcon.Normal, QIcon.Off)
             self.ui.user_image.setIcon(icon)
             self.client.save_user_avatar(open(filename, 'rb').read())
 
-        # TODO: Диалог откадрирования файла?
         # TODO: Отправить файл на сервер
 
     def load_user_avatar(self):
