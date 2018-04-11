@@ -1,6 +1,6 @@
 from sqlalchemy.orm import sessionmaker
 
-from client.alchemy import SQLContact
+from client.db import SQLContact
 from client.message_handlers.message_handler import MessageHandler
 from shared.messages import GetTextMessages
 

@@ -1,6 +1,6 @@
 from sqlalchemy.orm import sessionmaker
 
-from client.alchemy import SQLUser
+from client.db import SQLUser
 from client.message_handlers import MessageHandler
 
 

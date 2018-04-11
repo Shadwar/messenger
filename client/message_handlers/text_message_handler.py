@@ -1,7 +1,7 @@
 import rsa
 from sqlalchemy.orm import sessionmaker
 
-from client.alchemy import SQLMessage
+from client.db import SQLMessage
 from client.message_handlers.message_handler import MessageHandler
 
 
