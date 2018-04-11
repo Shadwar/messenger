@@ -5,8 +5,7 @@ from PIL.ImageQt import ImageQt
 from PyQt5.QtGui import QStandardItemModel, QStandardItem, QColor, QPixmap, QIcon
 from PyQt5.QtWidgets import QMainWindow, QFileDialog
 
-from client.login_ui import Ui_login_window as LoginUI
-from client.chat_ui import Ui_chat_window as ChatUI
+from client.ui import LoginUI, ChatUI
 from shared.messages import *
 
 
