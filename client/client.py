@@ -4,6 +4,7 @@ import logging
 import select
 import queue
 import threading
+import asyncio
 from time import sleep
 
 from sqlalchemy import create_engine
@@ -44,6 +45,11 @@ def handle_commands(client, recv_messages, sended_messages):
         sleep(0.1)
 
 
+async def send_to_server_coro(sock, message):
+    """ Отправка сообщений на сервер асинхронно """
+    sock.send(bytes(message))
+
+
 class Client(object):
     """ Клиент мессенджера
     """
@@ -70,6 +76,7 @@ class Client(object):
         logger.info('Запуск клиента')
 
         threading.Thread(target=handle_commands, args=(self, self.recv_messages, self.sended_messages)).start()
+        send_loop = asyncio.new_event_loop()
 
         while True:
             read_s, write_s, _ = select.select([self.socket], [self.socket], [], 0)
@@ -85,12 +92,14 @@ class Client(object):
                         self.recv_messages.put(command)
 
             if write_s:
-                try:
-                    message = self.send_messages.get_nowait()
-                except queue.Empty:
-                    pass
-                else:
-                    self.socket.send(bytes(message))
+                while not self.send_messages.empty():
+                    try:
+                        message = self.send_messages.get_nowait()
+                    except queue.Empty:
+                        pass
+                    else:
+                        task = send_loop.create_task(send_to_server_coro(self.socket, message))
+                        send_loop.run_until_complete(task)
 
             sleep(0.1)
 
