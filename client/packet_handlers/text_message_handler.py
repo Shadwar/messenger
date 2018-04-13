@@ -2,7 +2,7 @@ import rsa
 from sqlalchemy.orm import sessionmaker
 
 from client.db import SQLMessage
-from client.message_handlers.message_handler import MessageHandler
+from client.packet_handlers import MessageHandler
 
 
 class TextMessageHandler(MessageHandler):

@@ -2,7 +2,7 @@ import rsa
 from sqlalchemy.orm import sessionmaker
 
 from client.db import SQLUser
-from client.message_handlers import MessageHandler
+from client.packet_handlers import MessageHandler
 from shared.generate import get_hash
 from shared.packets import AuthenticatePacket
 

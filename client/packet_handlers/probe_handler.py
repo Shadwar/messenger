@@ -1,4 +1,4 @@
-from client.message_handlers.message_handler import MessageHandler
+from client.packet_handlers import MessageHandler
 from shared.packets import PresencePacket
 
 

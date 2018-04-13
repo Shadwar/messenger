@@ -6,7 +6,7 @@ from PyQt5.QtGui import QPixmap, QIcon
 from sqlalchemy.orm import sessionmaker
 
 from client.db import SQLUser
-from client.message_handlers import MessageHandler
+from client.packet_handlers import MessageHandler
 
 
 class LoadAvatarHandler(MessageHandler):

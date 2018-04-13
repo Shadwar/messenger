@@ -4,7 +4,7 @@ import rsa
 from sqlalchemy.orm import sessionmaker
 
 from client.db import SQLContact, SQLMessage
-from client.message_handlers import MessageHandler
+from client.packet_handlers import MessageHandler
 from shared.packets import MessagePacket
 
 

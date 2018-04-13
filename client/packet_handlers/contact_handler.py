@@ -1,7 +1,7 @@
 from sqlalchemy.orm import sessionmaker
 
 from client.db import SQLContact
-from client.message_handlers.message_handler import MessageHandler
+from client.packet_handlers import MessageHandler
 from shared.packets import GetMessagesPacket
 
 
