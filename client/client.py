@@ -8,7 +8,7 @@ from time import sleep
 
 from sqlalchemy import create_engine
 
-from client.message_handlers import *
+from client.packet_handlers import *
 
 logger = logging.getLogger('client')
 
