@@ -5,7 +5,7 @@ from sqlalchemy.orm import sessionmaker
 
 from client.db import SQLContact, SQLMessage
 from client.message_handlers import MessageHandler
-from shared.messages import TextMessage
+from shared.packets import MessagePacket
 
 
 class SendMessageHandler(MessageHandler):
@@ -23,7 +23,7 @@ class SendMessageHandler(MessageHandler):
 
             public_key = rsa.PublicKey.load_pkcs1(bytes.fromhex(db_contact.public_key), format='DER')
             crypted_text = rsa.encrypt(message.encode(), public_key)
-            text_message = TextMessage(client.login, contact, crypted_text.hex())
+            text_message = MessagePacket(client.login, contact, crypted_text.hex())
             client.signals['text_message'].emit(contact, client.login, message)
             client.send_message(text_message)
         session.close()

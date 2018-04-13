@@ -6,7 +6,7 @@ from PyQt5.QtGui import QStandardItemModel, QStandardItem, QColor, QPixmap, QIco
 from PyQt5.QtWidgets import QMainWindow, QFileDialog
 
 from client.ui import LoginUI, ChatUI
-from shared.messages import *
+from shared.packets import AddContactPacket
 
 
 class ClientWindow(QMainWindow):
@@ -55,7 +55,7 @@ class ClientWindow(QMainWindow):
     def add_contact_clicked(self):
         """ Обработчик нажатия кнопки добавления нового контакта """
         contact = self.ui.add_contact_input.text()
-        message = AddContactMessage(contact, self.client.public_key)
+        message = AddContactPacket(contact, self.client.public_key)
         self.client.send_message(message)
 
     def add_contact_signal(self, contact):

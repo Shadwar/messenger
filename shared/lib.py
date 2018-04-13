@@ -1,4 +1,4 @@
-from shared.responses import *
+from shared.packets import ErrorPacket
 
 
 def login_required(func):
@@ -13,7 +13,7 @@ def login_required(func):
         command = args[3]
 
         if user.gid is None:
-            user.send_message(ErrorResponse(401, command['id'], 'Login required'))
+            user.send_message(ErrorPacket(401, command['id'], 'Login required'))
             return None
         return func(*args)
 

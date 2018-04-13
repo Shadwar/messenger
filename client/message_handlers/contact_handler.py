@@ -2,7 +2,7 @@ from sqlalchemy.orm import sessionmaker
 
 from client.db import SQLContact
 from client.message_handlers.message_handler import MessageHandler
-from shared.messages import GetTextMessages
+from shared.packets import GetMessagesPacket
 
 
 class ContactHandler(MessageHandler):
@@ -17,7 +17,7 @@ class ContactHandler(MessageHandler):
         db_contact = SQLContact(login=client.login, contact=contact, public_key=public_key)
         session.add(db_contact)
         session.commit()
-        get_messages = GetTextMessages(db_contact.contact)
+        get_messages = GetMessagesPacket(db_contact.contact)
         client.send_message(get_messages)
         client.signals['add_contact'].emit(contact)
         session.close()

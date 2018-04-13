@@ -2,7 +2,7 @@ from sqlalchemy.orm import sessionmaker
 
 from client.db import SQLContact, SQLMessage
 from client.message_handlers.message_handler import MessageHandler
-from shared.messages import GetTextMessages, GetContactsMessage
+from shared.packets import GetMessagesPacket, GetContactsPacket
 
 
 class AuthenticateHandler(MessageHandler):
@@ -10,7 +10,7 @@ class AuthenticateHandler(MessageHandler):
     def run(self, client, command, response):
         if response and response['response'] == 202:
             client.signals['login_ok'].emit()
-            client.login = command['user']['account_name']
+            client.login = command['account_name']
             # Загрузить все данные
             session = sessionmaker(bind=self.db_engine)()
             db_contacts = session.query(SQLContact).filter_by(login=client.login).all()
@@ -23,7 +23,7 @@ class AuthenticateHandler(MessageHandler):
                 client.signals['text_message'].emit(chat, db_message.u_from, db_message.message)
 
             for db_contact in db_contacts:
-                get_messages = GetTextMessages(db_contact.contact)
+                get_messages = GetMessagesPacket(db_contact.contact)
                 db_last_message = session.query(SQLMessage).filter_by(user=client.login).order_by('-gid').first()
                 if db_last_message:
                     get_messages.data['time'] = db_last_message.time
@@ -33,7 +33,7 @@ class AuthenticateHandler(MessageHandler):
                 client.send_message(get_messages)
 
             session.close()
-            get_contacts = GetContactsMessage()
+            get_contacts = GetContactsPacket()
             client.send_message(get_contacts)
         else:
             client.signals['login_error'].emit()

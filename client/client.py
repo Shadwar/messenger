@@ -108,7 +108,7 @@ class Client(object):
             'authenticate': AuthenticateHandler,
             'add_contact': AddContactHandler,
             'contact_list': ContactHandler,
-            'msg': TextMessageHandler,
+            'message': TextMessageHandler,
             'save_avatar': SaveAvatarHandler,
             'load_avatar': LoadAvatarHandler,
             'authenticate_user': ClientAuthenticationHandler,

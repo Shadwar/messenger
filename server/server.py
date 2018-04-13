@@ -7,13 +7,10 @@ import logging
 import threading
 from time import sleep
 
-from server.file_storage import FileStorage
 from server.chat import Chat
 from server.user import User
-from shared.messages import *
-from shared.responses import *
 from server.message_handlers import *
-
+from shared.packets import WelcomePacket
 
 logger = logging.getLogger('server')
 server_users_lock = threading.Lock()
@@ -36,7 +33,7 @@ def accept_users(ssock, users):
             users[sock] = user
             server_users_lock.release()
 
-            user.send_message(WelcomeMessage())
+            user.send_message(WelcomePacket())
         except BlockingIOError:
             pass
         server_socket_lock.release()
@@ -127,7 +124,7 @@ class Server(object):
         self.handlers = dict({
             'authenticate': AuthenticateMessageHandler,
             'quit': QuitMessageHandler,
-            'msg': TextMessageHandler,
+            'message': TextMessageHandler,
             'join': ChatJoinMessageHandler,
             'leave': ChatLeaveMessageHandler,
             'create': ChatCreateMessageHandler,

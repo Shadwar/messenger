@@ -4,7 +4,7 @@ from sqlalchemy.orm import sessionmaker
 from client.db import SQLUser
 from client.message_handlers import MessageHandler
 from shared.generate import get_hash
-from shared.messages import AuthenticateMessage
+from shared.packets import AuthenticatePacket
 
 
 class ClientAuthenticationHandler(MessageHandler):
@@ -34,5 +34,5 @@ class ClientAuthenticationHandler(MessageHandler):
         client.public_key = db_user.public_key
 
         session.close()
-        message = AuthenticateMessage(login, password, db_user.public_key)
+        message = AuthenticatePacket(login, password, db_user.public_key)
         client.send_message(message)
