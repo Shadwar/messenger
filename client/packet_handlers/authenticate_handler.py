@@ -17,6 +17,9 @@ class AuthenticateHandler(MessageHandler):
             for db_contact in db_contacts:
                 client.signals['add_contact'].emit(db_contact.contact)
 
+            get_contacts = GetContactsPacket()
+            client.send_message(get_contacts)
+
             db_messages = session.query(SQLMessage).filter_by(user=client.login).all()
             for db_message in db_messages:
                 chat = db_message.u_from if db_message.u_from != client.login else db_message.u_to
@@ -33,7 +36,5 @@ class AuthenticateHandler(MessageHandler):
                 client.send_message(get_messages)
 
             session.close()
-            get_contacts = GetContactsPacket()
-            client.send_message(get_contacts)
         else:
             client.signals['login_error'].emit()

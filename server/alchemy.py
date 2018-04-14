@@ -52,6 +52,7 @@ class SQLChatMessage(SQLBase):
     gid = Column(Integer(), primary_key=True)
     u_from = Column(Integer(), ForeignKey('users.gid'))
     u_to = Column(Integer(), ForeignKey('chats.gid'))
+    time = Column(Integer())
     message = Column(Unicode())
 
     p_u_from = relationship("SQLUser", foreign_keys=[u_from])

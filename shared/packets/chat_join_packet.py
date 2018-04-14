@@ -6,6 +6,6 @@ class ChatJoinPacket(Packet):
     def __init__(self, room):
         super().__init__()
         self.data.update({
-            'action': 'join',
+            'action': 'chat_join',
             'room': room
         })

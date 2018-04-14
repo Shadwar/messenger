@@ -6,6 +6,6 @@ class ChatLeavePacket(Packet):
     def __init__(self, room):
         super().__init__()
         self.data.update({
-            'action': 'leave',
+            'action': 'chat_leave',
             'room': room
         })
