@@ -116,7 +116,7 @@ class Client(object):
         self.handlers = dict({
             'authenticate': AuthenticateHandler,
             'add_contact': AddContactHandler,
-            'contact_list': ContactHandler,
+            'contact': ContactHandler,
             'message': TextMessageHandler,
             'save_avatar': SaveAvatarHandler,
             'load_avatar': LoadAvatarHandler,

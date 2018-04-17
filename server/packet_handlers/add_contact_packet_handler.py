@@ -10,7 +10,7 @@ class AddContactPacketHandler(PacketHandler):
     """ Добавление нового контакта пользователем """
     def run(self, server, protocol, command):
         session = sessionmaker(bind=self.db_engine)()
-        contact = session.query(SQLUser).filter_by(login=command['contact']).first()
+        contact = session.query(SQLUser).filter(SQLUser.login.ilike(command['contact'])).first()
         if contact:
             db_contact = session.query(SQLContact).filter_by(user=protocol.user.gid).filter_by(contact=contact.gid).first()
             if db_contact:
@@ -21,7 +21,7 @@ class AddContactPacketHandler(PacketHandler):
                 other_contact = SQLContact(user=contact.gid, contact=protocol.user.gid)
                 session.add(other_contact)
                 session.commit()
-                protocol.send_packet(AlertPacket(200, command['id'], contact.public_key))
+                protocol.send_packet(AlertPacket(200, command['id'], [contact.login, contact.public_key]))
                 other = server.logged_users.get(contact.login)
                 if other:
                     command = ContactPacket(protocol.user.login, protocol.user.public_key)

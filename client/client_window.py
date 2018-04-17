@@ -55,7 +55,7 @@ class ClientWindow(QMainWindow):
     def add_contact_clicked(self):
         """ Обработчик нажатия кнопки добавления нового контакта """
         contact = self.ui.add_contact_input.text()
-        message = AddContactPacket(contact, self.client.public_key)
+        message = AddContactPacket(contact)
         self.client.send_message(message)
 
     def add_contact_signal(self, contact):

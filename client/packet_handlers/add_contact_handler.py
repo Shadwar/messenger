@@ -14,10 +14,11 @@ class AddContactHandler(MessageHandler):
             pass
 
         if response and response['response'] == 200:
-            public_key = response['alert']
+            login = response['alert_0']
+            public_key = response['alert_1']
             db_contact = SQLContact(login=client.login, contact=contact, public_key=public_key)
             session.add(db_contact)
             session.commit()
-            client.signals['add_contact'].emit(contact)
+            client.signals['add_contact'].emit(login)
 
         session.close()

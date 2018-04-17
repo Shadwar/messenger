@@ -15,5 +15,5 @@ class Chat(object):
 
     def send_message(self, message):
         """ Отправка сообщения в чат всем пользователям """
-        for u in self.users:
-            u.send_message(message)
+        for user in self.users:
+            user.send_packet(message)
