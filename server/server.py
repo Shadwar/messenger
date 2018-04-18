@@ -57,7 +57,13 @@ class Server(object):
         for sock in server.sockets:
             print("serving on {}".format(sock.getsockname()))
 
-        self.loop.run_forever()
+        try:
+            self.loop.run_forever()
+        except KeyboardInterrupt:
+            print('Сервер остановлен')
+        server.close()
+        self.loop.run_until_complete(server.wait_closed())
+        self.loop.close()
 
     @staticmethod
     def parse_raw_received(raw):

@@ -90,4 +90,3 @@ if __name__ == '__main__':
 
     shared.log_config.init()
     server = Server(addr, port)
-    server.run()
