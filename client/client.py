@@ -57,6 +57,7 @@ class Client(object):
         self.signals = dict()
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.socket.connect((addr, port))
+        self.socket.setblocking(False)
         self.chats = {}
         self.contacts = None
         self.messages = dict()
@@ -82,7 +83,15 @@ class Client(object):
             read_s, write_s, _ = select.select([self.socket], [self.socket], [], 0)
 
             if read_s:
-                raw_data = self.socket.recv(1024)
+                fragments = []
+                while True:
+                    try:
+                        chunk = self.socket.recv(2048)
+                    except:
+                        break
+                    fragments.append(chunk)
+
+                raw_data = b"".join(fragments)
 
                 if not raw_data:
                     self.socket.close()
@@ -121,7 +130,10 @@ class Client(object):
             'save_avatar': SaveAvatarHandler,
             'load_avatar': LoadAvatarHandler,
             'authenticate_user': ClientAuthenticationHandler,
-            'send_message_to_server': SendMessageHandler
+            'send_message_to_server': SendMessageHandler,
+            'chat_create': ChatCreateHandler,
+            'chat_join': ChatJoinHandler,
+            'chat_contact': ChatContactHandler
         })
         pass
 

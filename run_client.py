@@ -66,6 +66,25 @@ def create_db():
         public_key varchar(1024)
       )
     """)
+
+    cursor.execute("""
+      create table chats (
+        gid integer primary key autoincrement,
+        login varchar(30),
+        name varchar(30)
+      )
+    """)
+
+    cursor.execute("""
+      create table chat_messages (
+        gid integer primary key autoincrement,
+        login varchar(30),
+        name varchar(30),
+        contact varchar(30),
+        time integer,
+        message text
+      )
+    """)
     connection.commit()
 
 

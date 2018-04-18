@@ -8,3 +8,6 @@ from .client_authentication_handler import ClientAuthenticationHandler
 from .load_avatar_handler import LoadAvatarHandler
 from .save_avatar_handler import SaveAvatarHandler
 from .send_message_handler import SendMessageHandler
+from .chat_create_handler import ChatCreateHandler
+from .chat_join_handler import ChatJoinHandler
+from .chat_contact_handler import ChatContactHandler

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'client/chat.ui'
+# Form implementation generated from reading ui file 'client/ui/chat.ui'
 #
 # Created by: PyQt5 UI code generator 5.10
 #
@@ -17,7 +17,7 @@ class Ui_chat_window(object):
         self.centralwidget.setStyleSheet("background-color: rgb(76, 135, 202);")
         self.centralwidget.setObjectName("centralwidget")
         self.contacts = QtWidgets.QListView(self.centralwidget)
-        self.contacts.setGeometry(QtCore.QRect(10, 70, 280, 480))
+        self.contacts.setGeometry(QtCore.QRect(10, 70, 280, 441))
         self.contacts.setStyleSheet("background-color: rgb(255, 255, 255);")
         self.contacts.setObjectName("contacts")
         self.chat = QtWidgets.QListView(self.centralwidget)
@@ -33,11 +33,11 @@ class Ui_chat_window(object):
         self.send_button.setStyleSheet("background-color: rgba(50, 127, 198, 100);font: 19pt;")
         self.send_button.setObjectName("send_button")
         self.add_contact_button = QtWidgets.QPushButton(self.centralwidget)
-        self.add_contact_button.setGeometry(QtCore.QRect(170, 560, 121, 31))
+        self.add_contact_button.setGeometry(QtCore.QRect(150, 520, 141, 31))
         self.add_contact_button.setStyleSheet("background-color: rgba(50, 127, 198, 100);")
         self.add_contact_button.setObjectName("add_contact_button")
         self.add_contact_input = QtWidgets.QLineEdit(self.centralwidget)
-        self.add_contact_input.setGeometry(QtCore.QRect(10, 560, 151, 31))
+        self.add_contact_input.setGeometry(QtCore.QRect(10, 520, 131, 31))
         self.add_contact_input.setStyleSheet("background-color: rgb(255, 255, 255);")
         self.add_contact_input.setObjectName("add_contact_input")
         self.user_name = QtWidgets.QLabel(self.centralwidget)
@@ -53,6 +53,14 @@ class Ui_chat_window(object):
         self.user_image.setIconSize(QtCore.QSize(50, 50))
         self.user_image.setFlat(True)
         self.user_image.setObjectName("user_image")
+        self.create_chat_input = QtWidgets.QLineEdit(self.centralwidget)
+        self.create_chat_input.setGeometry(QtCore.QRect(10, 560, 131, 31))
+        self.create_chat_input.setStyleSheet("background-color: rgb(255, 255, 255);")
+        self.create_chat_input.setObjectName("create_chat_input")
+        self.create_chat_button = QtWidgets.QPushButton(self.centralwidget)
+        self.create_chat_button.setGeometry(QtCore.QRect(150, 560, 141, 31))
+        self.create_chat_button.setStyleSheet("background-color: rgba(50, 127, 198, 100);")
+        self.create_chat_button.setObjectName("create_chat_button")
         chat_window.setCentralWidget(self.centralwidget)
 
         self.retranslateUi(chat_window)
@@ -62,6 +70,7 @@ class Ui_chat_window(object):
         _translate = QtCore.QCoreApplication.translate
         chat_window.setWindowTitle(_translate("chat_window", "Chat"))
         self.send_button.setText(_translate("chat_window", "Send"))
-        self.add_contact_button.setText(_translate("chat_window", "Добавить контакт"))
+        self.add_contact_button.setText(_translate("chat_window", "Добавить контакт/чат"))
         self.user_name.setText(_translate("chat_window", "UserName"))
+        self.create_chat_button.setText(_translate("chat_window", "Создать чат"))
 

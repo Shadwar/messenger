@@ -23,7 +23,7 @@
       <x>10</x>
       <y>70</y>
       <width>280</width>
-      <height>480</height>
+      <height>441</height>
      </rect>
     </property>
     <property name="styleSheet">
@@ -75,9 +75,9 @@
    <widget class="QPushButton" name="add_contact_button">
     <property name="geometry">
      <rect>
-      <x>170</x>
-      <y>560</y>
-      <width>121</width>
+      <x>150</x>
+      <y>520</y>
+      <width>141</width>
       <height>31</height>
      </rect>
     </property>
@@ -85,15 +85,15 @@
      <string notr="true">background-color: rgba(50, 127, 198, 100);</string>
     </property>
     <property name="text">
-     <string>Добавить контакт</string>
+     <string>Добавить контакт/чат</string>
     </property>
    </widget>
    <widget class="QLineEdit" name="add_contact_input">
     <property name="geometry">
      <rect>
       <x>10</x>
-      <y>560</y>
-      <width>151</width>
+      <y>520</y>
+      <width>131</width>
       <height>31</height>
      </rect>
     </property>
@@ -141,6 +141,35 @@
     </property>
     <property name="flat">
      <bool>true</bool>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="create_chat_input">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>560</y>
+      <width>131</width>
+      <height>31</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">background-color: rgb(255, 255, 255);</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="create_chat_button">
+    <property name="geometry">
+     <rect>
+      <x>150</x>
+      <y>560</y>
+      <width>141</width>
+      <height>31</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">background-color: rgba(50, 127, 198, 100);</string>
+    </property>
+    <property name="text">
+     <string>Создать чат</string>
     </property>
    </widget>
   </widget>

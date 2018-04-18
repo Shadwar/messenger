@@ -6,7 +6,7 @@ from PyQt5.QtGui import QStandardItemModel, QStandardItem, QColor, QPixmap, QIco
 from PyQt5.QtWidgets import QMainWindow, QFileDialog
 
 from client.ui import LoginUI, ChatUI
-from shared.packets import AddContactPacket
+from shared.packets import AddContactPacket, ChatCreatePacket, ChatJoinPacket
 
 
 class ClientWindow(QMainWindow):
@@ -42,6 +42,7 @@ class ClientWindow(QMainWindow):
         self.ui.contacts.doubleClicked.connect(self.item_contact_clicked)
         self.ui.send_button.pressed.connect(self.send_text_message)
         self.ui.user_image.pressed.connect(self.change_user_image)
+        self.ui.create_chat_button.pressed.connect(self.create_chat_clicked)
 
         self.client.load_user_avatar(self.ui.user_image)
         # TODO: Запростить изображение пользователя с сервера
@@ -55,7 +56,16 @@ class ClientWindow(QMainWindow):
     def add_contact_clicked(self):
         """ Обработчик нажатия кнопки добавления нового контакта """
         contact = self.ui.add_contact_input.text()
-        message = AddContactPacket(contact)
+        if contact.startswith('#'):
+            message = ChatJoinPacket(contact)
+        else:
+            message = AddContactPacket(contact)
+        self.client.send_message(message)
+
+    def create_chat_clicked(self):
+        """ Обработчик нажатия кнопки создания нового чата """
+        chat_name = self.ui.create_chat_input.text()
+        message = ChatCreatePacket(chat_name)
         self.client.send_message(message)
 
     def add_contact_signal(self, contact):

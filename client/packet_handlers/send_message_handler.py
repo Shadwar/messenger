@@ -3,7 +3,7 @@ import time
 import rsa
 from sqlalchemy.orm import sessionmaker
 
-from client.db import SQLContact, SQLMessage
+from client.db import SQLContact, SQLMessage, SQLChat, SQLChatMessage
 from client.packet_handlers import MessageHandler
 from shared.packets import MessagePacket
 
@@ -11,6 +11,7 @@ from shared.packets import MessagePacket
 class SendMessageHandler(MessageHandler):
     """ Шифрование и отправка сообщения на сервер """
     def run(self, client, command, response):
+        print(2)
         contact = command['contact']
         message = command['message']
         session = sessionmaker(bind=self.db_engine)()
@@ -26,4 +27,15 @@ class SendMessageHandler(MessageHandler):
             text_message = MessagePacket(client.login, contact, crypted_text.hex())
             client.signals['text_message'].emit(contact, client.login, message)
             client.send_message(text_message)
+        else:
+            db_chat = session.query(SQLChat).filter_by(name=contact).first()
+            if db_chat:
+                db_message = SQLChatMessage(login=client.login, name=contact, contact=client.login, time=int(time.time()), message=message)
+                session.add(db_message)
+                session.commit()
+
+                client.signals['text_message'].emit(contact, client.login, message)
+                text_message = MessagePacket(client.login, contact, message)
+                client.send_message(text_message)
+
         session.close()

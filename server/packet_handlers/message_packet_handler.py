@@ -1,6 +1,6 @@
 from sqlalchemy.orm import sessionmaker
 
-from server.alchemy import SQLUser, SQLChat, SQLChatMessage, SQLMessage
+from server.alchemy import SQLUser, SQLChat, SQLChatMessage, SQLMessage, SQLUserChat
 from shared.packets import MessagePacket, ResponsePacket
 from .packet_handler import PacketHandler
 
@@ -17,9 +17,6 @@ class MessagePacketHandler(PacketHandler):
         db_message = None
 
         if receiver.startswith('#'):
-            if receiver in server.chats:
-                server.chats[receiver].send_message(text_message)
-
             db_receiver = session.query(SQLChat).filter_by(name=receiver).first()
             if db_receiver:
                 db_message = SQLChatMessage(
@@ -27,6 +24,14 @@ class MessagePacketHandler(PacketHandler):
                         u_to=db_receiver.gid,
                         time=command['time'],
                         message=message)
+                users = session.query(SQLUserChat, SQLUser).join(SQLUser, SQLUser.gid == SQLUserChat.user).filter(SQLUserChat.chat == db_receiver.gid).all()
+                if users:
+                    for user_chat, user in users:
+                        if user.login != sender:
+                            receiver_user = server.logged_users.get(user.login)
+                            if receiver_user:
+                                receiver_user.protocol.send_packet(text_message)
+
         else:
             receiver_user = server.logged_users.get(receiver)
             if receiver_user:

@@ -13,6 +13,7 @@ class ContactHandler(MessageHandler):
         session = sessionmaker(bind=self.db_engine)()
         db_contact = session.query(SQLContact).filter_by(login=client.login).filter_by(contact=contact).first()
         if db_contact:
+            session.close()
             return
         db_contact = SQLContact(login=client.login, contact=contact, public_key=public_key)
         session.add(db_contact)

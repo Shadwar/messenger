@@ -9,7 +9,7 @@ class AddContactHandler(MessageHandler):
     def run(self, client, command, response):
         contact = command['contact']
         session = sessionmaker(bind=self.db_engine)()
-        db_contact = session.query(SQLContact).filter_by(login=client.login).filter_by(contact=contact).first()
+        db_contact = session.query(SQLContact).filter_by(login=client.login).filter(SQLContact.contact.ilike(contact)).first()
         if db_contact:
             pass
 

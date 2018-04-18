@@ -11,7 +11,6 @@ class Server(object):
     """ Сервер мессенджера """
     clients = []
     logged_users = dict()
-    chats = dict()
     handlers = None
     db_engine = None
 

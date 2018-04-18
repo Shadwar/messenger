@@ -1,6 +1,6 @@
 from sqlalchemy.orm import sessionmaker
 
-from server.alchemy import SQLUser, SQLMessage
+from server.alchemy import SQLUser, SQLMessage, SQLChat
 from shared.packets import MessagePacket
 from .packet_handler import PacketHandler
 
@@ -13,6 +13,8 @@ class GetMessagesPacketHandler(PacketHandler):
 
         session = sessionmaker(bind=self.db_engine)()
         if contact.startswith('#'):
+            # db_chat = session.query(SQLChat).filter_by(name=contact)
+            # if db_chat:
             pass
         else:
             db_contact = session.query(SQLUser).filter_by(login=contact).first()
