@@ -11,7 +11,6 @@ from shared.packets import MessagePacket
 class SendMessageHandler(MessageHandler):
     """ Шифрование и отправка сообщения на сервер """
     def run(self, client, command, response):
-        print(2)
         contact = command['contact']
         message = command['message']
         session = sessionmaker(bind=self.db_engine)()

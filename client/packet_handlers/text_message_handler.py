@@ -9,7 +9,6 @@ class TextMessageHandler(MessageHandler):
     """ Обработчик текстовых сообщений """
     def run(self, client, command, response):
         if response is None:
-            print(1)
             sender = command['from']
             receiver = command['to']
             message = command['message']
