@@ -3,13 +3,14 @@ from kivy.uix.screenmanager import Screen
 from .contact_list import ContactList
 from .user_info import UserInfo
 from .communication_list import CommunicationList
+from .communication_input import CommunicationInput
 
 
 class ChatScreen(Screen):
     user_info = ObjectProperty(None)
     contact_list = ObjectProperty(None)
     communication_list = ObjectProperty(None)
-    # chat_input = ObjectProperty(None)
+    communication_input = ObjectProperty(None)
 
     def on_pre_enter(self, *args):
         self.ids.user_info.text = 'shadwar'.ljust(16)

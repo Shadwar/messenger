@@ -105,6 +105,35 @@
             size_hint: 1, None
             do_scroll_x: False
 
+<Smile>:
+    size: 30, 30
+    size_hint_x: None
+
+
+<CommunicationInput>:
+    GridLayout:
+        cols: 1
+        size: self.parent.width - submit_button.width - 10, self.parent.height
+        pos: self.parent.pos
+        spacing: 5
+
+        GridLayout:
+            id: smile_container
+            size_hint: 1, None
+            spacing: 5
+            height: 30
+            cols: 10
+            do_scroll_x: False
+
+        TextInput:
+            id: input_field
+            font_size: 16
+
+    Button:
+        id: submit_button
+        text: 'Отправить'
+        size: 100, self.parent.height
+        pos: self.parent.x + self.parent.width - self.width, self.parent.y
 
 <ChatScreen>:
     canvas.before:
@@ -131,3 +160,9 @@
         size_hint: None, None
         pos: contact_list.width + 20, 200
         size: root.width - contact_list.width - 30, root.height - 210
+
+    CommunicationInput:
+        id: communication_input
+        size_hint: None, None
+        pos: contact_list.width + 20, 10
+        size: root.width - contact_list.width - 30, 180
