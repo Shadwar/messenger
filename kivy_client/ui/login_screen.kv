@@ -1,0 +1,72 @@
+#:kivy 1.10.0
+
+<LoginScreen>:
+    canvas.before:
+        Color:
+            rgba: 0, .3, .8, .5
+        Rectangle:
+            pos: self.pos
+            size: self.size
+    AnchorLayout:
+        BoxLayout:
+            size_hint: None, None
+            size: 400, 280
+            orientation: 'vertical'
+            spacing: 10
+
+            Label:
+                text: 'MyMessenger'
+                font_size: 40
+
+            GridLayout:
+                size_hint_y: None
+                size: 400, 100
+                cols: 2
+                spacing: 10
+
+                Label:
+                    size_hint_x: 0.4
+                    text: "Логин"
+                    font_size: 20
+                    text_size: self.size
+                    valign: "middle"
+                    halign: "left"
+
+                TextInput:
+                    id: username_input
+                    cursor_blink: True
+                    font_size: 20
+                    multiline: False
+
+                Label:
+                    size_hint_x: 0.4
+                    text:"Пароль"
+                    font_size: 20
+                    text_size: self.size
+                    valign: "middle"
+                    halign: "left"
+
+                TextInput:
+                    id: password_input
+                    cursor_blink: True
+                    font_size: 20
+                    multiline: False
+                    password: True
+
+            GridLayout:
+                size_hint_y: None
+                cols: 2
+                spacing: 10
+                padding: 10
+
+                Button:
+                    size_hint_y: None
+                    id: register_button
+                    height: 40
+                    text: 'Зарегистрироваться'
+
+                Button:
+                    size_hint_y: None
+                    id: login_button
+                    height: 40
+                    text:'Войти'
