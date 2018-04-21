@@ -40,7 +40,6 @@ class Test(Widget):
 class ClientApp(App):
     def build(self):
         cl = Test()
-        print(dir(cl.ids.contact_list))
         for i in range(3):
             cl.ids.contact_list.add_item('button-{}'.format(i))
 

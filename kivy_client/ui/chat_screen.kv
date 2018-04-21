@@ -1,0 +1,91 @@
+#:kivy 1.10.0
+
+<UserInfo>:
+    background_normal: ''
+    background_color: 1, 1, 1, 1
+    size_hint: 1, None
+    size: 180, 45
+    color: 0, 0, 0, 1
+    font_size: 20
+
+    Image:
+        id: image_avatar
+        size: 30, 30
+        x: self.parent.x + 5
+        y: self.parent.y + 5
+
+<Contact>:
+    background_normal: ''
+    background_color: 1, 1, 1, 1
+    size_hint: 1, None
+    size: 180, 35
+    color: 0, 0, 0, 1
+    font_size: 18
+
+    Image:
+        id: image_avatar
+        size: 25, 25
+        x: self.parent.x + 5
+        y: self.parent.y + 5
+
+
+<ContactList>:
+    do_scroll_x: False
+
+    canvas.before:
+        Color:
+            rgba: 1, 1, 1, 1
+        Rectangle:
+            pos: self.pos
+            size: self.size
+
+    GridLayout:
+        cols: 1
+        spacing: 10
+
+        Button:
+            id: find_user
+            size_hint_y: None
+            text: 'Поиск пользователя'
+            color: 0, 0, 0, 1
+            height: 30
+            halign: 'left'
+
+        ScrollView:
+            GridLayout:
+                id: container
+                cols: 1
+                padding: 10
+                spacing: 5
+                height: self.minimum_height
+                size_hint: 1, None
+                do_scroll_x: False
+
+        Button:
+            id: create_chat
+            size_hint_y: None
+            y: root.y
+            text: 'Создать чат'
+            color: 0, 0, 0, 1
+            height: 30
+
+
+<ChatScreen>:
+    canvas.before:
+        Color:
+            rgba: 0, .3, .8, .5
+        Rectangle:
+            pos: self.pos
+            size: self.size
+
+    UserInfo:
+        id: user_info
+        size_hint: None, None
+        pos: 10, root.top - 50
+        size: 200, 40
+
+    ContactList:
+        id: contact_list
+        size_hint: None, None
+        pos: 10, 10
+        size: 200, root.height-70
