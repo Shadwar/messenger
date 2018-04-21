@@ -16,7 +16,6 @@ class Client(object, metaclass=Singleton):
     """ Клиент мессенджера
     """
     def __init__(self, addr, port):
-        self.signals = dict()
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.socket.connect((addr, port))
         self.socket.setblocking(False)
@@ -26,6 +25,7 @@ class Client(object, metaclass=Singleton):
         self.messages = dict()
         self.login = None
         self.handlers = dict()
+        self.ui_handlers = dict()
         self.init_handlers()
         self.recv_messages = queue.Queue()
         self.send_messages = queue.Queue()
@@ -81,6 +81,8 @@ class Client(object, metaclass=Singleton):
             action = message['action']
             if action in self.handlers:
                 self.handlers[action](message, response)
+            if action in self.ui_handlers:
+                self.ui_handlers[action](message, response)
 
     def send_message(self, message):
         print(message)

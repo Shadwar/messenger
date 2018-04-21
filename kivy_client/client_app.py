@@ -23,6 +23,5 @@ class ClientApp(App):
 
         sm.client = Client(None, None)
         Clock.schedule_interval(sm.client.update, 1.0 / 10.0)
-        self.sm = sm
 
         return sm

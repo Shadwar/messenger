@@ -1,9 +1,7 @@
-from kivy.graphics.context_instructions import Color
-from kivy.graphics.vertex_instructions import Rectangle
 from kivy.properties import ObjectProperty
 from kivy.uix.scrollview import ScrollView
 
-from .message import Message
+from kivy_client.front.widgets.message import Message
 
 
 class CommunicationList(ScrollView):

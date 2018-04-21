@@ -1,8 +1,7 @@
 from kivy.properties import ObjectProperty, Clock
-from kivy.uix.button import Button
 from kivy.uix.widget import Widget
 
-from .smile import Smile
+from kivy_client.front.widgets.smile import Smile
 
 
 class CommunicationInput(Widget):
