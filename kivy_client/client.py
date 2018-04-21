@@ -5,6 +5,7 @@ import select
 import queue
 
 from sqlalchemy import create_engine
+from collections import defaultdict
 
 from kivy_client.back import UserInfo, CommunicationList, ContactList
 from shared.lib import Singleton
@@ -15,14 +16,17 @@ logger = logging.getLogger('client')
 class Client(object, metaclass=Singleton):
     """ Клиент мессенджера
     """
-    def __init__(self, addr, port):
+    def __init__(self, addr=None, port=None):
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.socket.connect((addr, port))
         self.socket.setblocking(False)
         self.db_engine = create_engine('sqlite:///client.db')
         self.chats = {}
-        self.contacts = None
-        self.messages = dict()
+
+        self.contacts = []
+        self.messages = defaultdict(list)
+        self.current_contact = ''
+
         self.login = None
         self.handlers = dict()
         self.ui_handlers = dict()
@@ -53,7 +57,7 @@ class Client(object, metaclass=Singleton):
                 exit(0)
             else:
                 for command in self.parse_raw_received(raw_data.decode()):
-                    self.recv_messages.put(command)
+                    self.send_event(command)
 
         if write_s:
             while not self.send_messages.empty():
@@ -85,7 +89,6 @@ class Client(object, metaclass=Singleton):
                 self.ui_handlers[action](message, response)
 
     def send_message(self, message):
-        print(message)
         self.message_id += 1
         message.data['id'] = self.message_id
         self.sended_messages[self.message_id] = message
@@ -95,6 +98,9 @@ class Client(object, metaclass=Singleton):
         ContactList(self)
         UserInfo(self)
         CommunicationList(self)
+
+    def send_event(self, event):
+        self.recv_messages.put(event)
 
     def parse_raw_received(self, raw):
         """ Парсит входящий массив на отдельные команды"""
@@ -113,21 +119,21 @@ class Client(object, metaclass=Singleton):
                     command = ""
             index += 1
 
-        print(commands)
+        # print(commands)
         return commands
 
     def authenticate(self, login, password):
         """ Создание нового аккаунта и ключей шифрования """
-        self.recv_messages.put({'action': 'authenticate_user', 'login': login, 'password': password, 'client': self})
+        self.send_event({'action': 'authenticate_user', 'login': login, 'password': password, 'client': self})
 
     def send_text_message(self, contact, message):
         """ Отправка и шифрование текстового сообщения """
-        self.recv_messages.put({'action': 'send_message_to_server', 'contact': contact, 'message': message})
+        self.send_event({'action': 'send_message_to_server', 'contact': contact, 'message': message})
 
     def save_avatar(self, filename):
         """ Сохранение аватара пользователя в базу данных """
-        self.recv_messages.put({'action': 'save_avatar', 'filename': filename})
+        self.send_event({'action': 'save_avatar', 'filename': filename})
 
     def load_user_avatar(self, container):
         """ Установка аватара пользователя, если он есть в базе данных """
-        self.recv_messages.put({'action': 'load_avatar', 'container': container})
+        self.send_event({'action': 'load_avatar', 'container': container})

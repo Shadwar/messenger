@@ -1,7 +1,11 @@
 from kivy.properties import ObjectProperty
 from kivy.uix.screenmanager import Screen
 
+from .base_screen import BaseScreen
 
-class RegisterScreen(Screen):
+
+class RegisterScreen(BaseScreen):
     button_submit = ObjectProperty(None)
-    pass
+
+    def register_handlers(self, client):
+        pass

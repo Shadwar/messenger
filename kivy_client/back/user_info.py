@@ -15,11 +15,14 @@ from shared.packets import GetContactsPacket, GetMessagesPacket, AuthenticatePac
 class UserInfo(object):
     """ Класс, отвечающий за работу информации о пользователе """
     def __init__(self, client):
+        """
+        :param client: Client
+        """
         self.client = client
         self.db_engine = client.db_engine
         self.client.handlers['load_avatar'] = self.load_avatar_handler
         self.client.handlers['save_avatar'] = self.save_avatar_handler
-        self.client.handlers['authentication'] = self.send_authentication_handler
+        self.client.handlers['authenticate'] = self.send_authentication_handler
         self.client.handlers['authenticate_user'] = self.client_authentication_handler
         self.client.handlers['user_status'] = self.user_status_handler
 
@@ -50,22 +53,26 @@ class UserInfo(object):
 
     def send_authentication_handler(self, command, response):
         if response and response['response'] == 202:
-            # client.signals['login_ok'].emit()
             self.client.login = command['account_name']
             # Загрузить все данные
             session = sessionmaker(bind=self.db_engine)()
+
+            # Загрузка контактов из локальной базы
             db_contacts = session.query(SQLContact).filter_by(login=self.client.login).all()
-            # for db_contact in db_contacts:
-            #     client.signals['add_contact'].emit(db_contact.contact)
+            for db_contact in db_contacts:
+                self.client.contacts.append(db_contact.contact)
 
-            get_contacts = GetContactsPacket()
-            self.client.send_message(get_contacts)
-
+            # Загрузка сообщений из локальной базы
             db_messages = session.query(SQLMessage).filter_by(user=self.client.login).all()
             for db_message in db_messages:
                 chat = db_message.u_from if db_message.u_from != self.client.login else db_message.u_to
-                # client.signals['text_message'].emit(chat, db_message.u_from, db_message.message)
+                self.client.messages[chat].append({
+                    'u_from': db_message.u_from,
+                    'message': db_message.message,
+                    'time': db_message.time
+                })
 
+            # Запрос сообщений с сервера
             for db_contact in db_contacts:
                 get_messages = GetMessagesPacket(db_contact.contact)
                 db_last_message = session.query(SQLMessage).filter_by(user=self.client.login).order_by('-gid').first()
@@ -73,28 +80,37 @@ class UserInfo(object):
                     get_messages.data['time'] = db_last_message.time
                 else:
                     get_messages.data['time'] = 0
-
                 self.client.send_message(get_messages)
 
+            # Загрузка чатов из локальной базы
             db_chats = session.query(SQLChat).filter_by(login=self.client.login).all()
             for db_chat in db_chats:
-                # client.signals['add_contact'].emit(db_chat.name)
-                db_messages = session.query(SQLChatMessage).filter(and_(SQLChatMessage.login == self.client.login, SQLChatMessage.name == db_chat.name)).all()
-                # for db_message in db_messages:
-                #     client.signals['text_message'].emit(db_message.name, db_message.contact, db_message.message)
+                self.client.contacts.append(db_chat.name)
 
-                db_last_message = session.query(SQLChatMessage).filter(and_(SQLChatMessage.login == self.client.login, SQLChatMessage.name == db_chat.name)).order_by('-gid').first()
+            # Загрузка сообщений чатов из локальной базы
+            db_messages = session.query(SQLChatMessage).filter_by(login=self.client.login).all()
+            for db_message in db_messages:
+                self.client.messages[db_message.name].append({'u_from': db_message.contact, 'message': db_message.message, 'time': db_message.time})
+
+            # Загрузка сообщений с сервера
+            for db_chat in db_chats:
                 get_messages = GetMessagesPacket(db_chat.name)
+                db_last_message = session.query(SQLChatMessage).filter(and_(SQLChatMessage.login == self.client.login, SQLChatMessage.name == db_chat.name)).order_by('-gid').first()
                 if db_last_message:
                     get_messages.data['time'] = db_last_message.time
                 else:
                     get_messages.data['time'] = 0
-
                 self.client.send_message(get_messages)
 
+            # Запрос контактов с сервера
+            get_contacts = GetContactsPacket()
+            self.client.send_message(get_contacts)
+
             session.close()
-        # else:
-        #     client.signals['login_error'].emit()
+
+            self.client.send_event({'action': 'login_ok'})
+        else:
+            self.client.send_event({'action': 'login_error'})
 
     def client_authentication_handler(self, command, response):
         session = sessionmaker(bind=self.db_engine)()

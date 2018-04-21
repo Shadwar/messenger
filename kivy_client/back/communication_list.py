@@ -11,7 +11,7 @@ class CommunicationList(object):
     def __init__(self, client):
         self.client = client
         self.db_engine = client.db_engine
-        self.client.handlers['add_message'] = self.add_message_handler
+        self.client.handlers['message'] = self.add_message_handler
         self.client.handlers['send_message'] = self.send_message_handler
 
     def add_message_handler(self, command, response):
@@ -27,14 +27,20 @@ class CommunicationList(object):
                 session.add(db_message)
                 session.commit()
                 chat = receiver
-                # client.signals['text_message'].emit(db_message.name, db_message.contact, message)
+                self.client.messages[chat].append({'u_from': db_message.contact, 'message': message, 'time': m_time})
+
+                if self.client.current_contact == chat:
+                    self.client.send_event({'action': 'ui_add_message', 'u_from': db_message.contact, 'message': message, 'time': m_time})
             else:
                 message = rsa.decrypt(bytes.fromhex(message), rsa.key.PrivateKey.load_pkcs1(bytes.fromhex(self.client.private_key), format='DER'))
                 db_message = SQLMessage(user=self.client.login, u_from=sender, u_to=receiver, message=message.decode(), time=m_time)
                 session.add(db_message)
                 session.commit()
                 chat = db_message.u_from if db_message.u_from != self.client.login else db_message.u_to
-                # client.signals['text_message'].emit(chat, db_message.u_from, message.decode())
+                self.client.messages[chat].append({'u_from': db_message.u_from, 'message': message.decode(), 'time': m_time})
+
+                if self.client.current_contact == chat:
+                    self.client.send_event({'action': 'ui_add_message', 'u_from': db_message.u_from, 'message': message, 'time': m_time})
             session.close()
 
     def send_message_handler(self, command, response):

@@ -5,7 +5,6 @@ from .SQL_base import SQLBase
 
 class SQLContact(SQLBase):
     __tablename__ = 'contacts'
-    print('kivy_client_db_SQL_contact')
 
     gid = Column(Integer(), primary_key=True)
     login = Column(Unicode())

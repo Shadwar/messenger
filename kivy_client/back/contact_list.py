@@ -29,7 +29,7 @@ class ContactList(object):
             db_contact = SQLContact(login=self.client.login, contact=contact, public_key=public_key)
             session.add(db_contact)
             session.commit()
-            # client.signals['add_contact'].emit(login)
+            self.client.send_event({'action': 'ui_add_contact', 'contact': contact})
 
         session.close()
 
@@ -96,5 +96,5 @@ class ContactList(object):
         session.commit()
         get_messages = GetMessagesPacket(db_contact.contact)
         self.client.send_message(get_messages)
-        # client.signals['add_contact'].emit(contact)
+        self.client.send_event({'action': 'ui_add_contact', 'contact': contact})
         session.close()
