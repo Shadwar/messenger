@@ -22,9 +22,5 @@ class ClientApp(App):
         sm.add_widget(ChatScreen(name='chat'))
 
         sm.current = 'chat'
-        scr = sm.get_screen('chat')
-        for i in range(3):
-            scr.ids.contact_list.add_item('button-{}'.format(i))
-
 
         return sm

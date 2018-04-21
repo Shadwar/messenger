@@ -70,6 +70,42 @@
             height: 30
 
 
+<Message>:
+    canvas.before:
+        Color:
+            rgba: self.r, self.g, self.b, 1
+        Rectangle:
+            pos: self.pos
+            size: self.size
+
+    size_hint: None, None
+    size: 180, 35
+    color: 0, 0, 0, 1
+    font_size: 18
+    halign: 'left'
+    padding: (10, 10)
+
+<CommunicationList>:
+    do_scroll_x: False
+
+    canvas.before:
+        Color:
+            rgba: 1, 1, 1, 1
+        Rectangle:
+            pos: self.pos
+            size: self.size
+
+    ScrollView:
+        GridLayout:
+            id: container
+            cols: 1
+            padding: 10
+            spacing: 5
+            height: self.minimum_height
+            size_hint: 1, None
+            do_scroll_x: False
+
+
 <ChatScreen>:
     canvas.before:
         Color:
@@ -88,4 +124,10 @@
         id: contact_list
         size_hint: None, None
         pos: 10, 10
-        size: 200, root.height-70
+        size: 200, root.height- user_info.height - 20
+
+    CommunicationList:
+        id: communication_list
+        size_hint: None, None
+        pos: contact_list.width + 20, 200
+        size: root.width - contact_list.width - 30, root.height - 210
