@@ -1,9 +1,6 @@
 from kivy.properties import ObjectProperty
 from kivy.uix.screenmanager import Screen
-from .contact_list import ContactList
-from .user_info import UserInfo
-from .communication_list import CommunicationList
-from .communication_input import CommunicationInput
+from . import ContactList, UserInfo, CommunicationList, CommunicationInput
 
 
 class ChatScreen(Screen):

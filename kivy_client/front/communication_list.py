@@ -3,7 +3,7 @@ from kivy.graphics.vertex_instructions import Rectangle
 from kivy.properties import ObjectProperty
 from kivy.uix.scrollview import ScrollView
 
-from kivy_client.message import Message
+from .message import Message
 
 
 class CommunicationList(ScrollView):

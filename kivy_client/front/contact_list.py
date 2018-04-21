@@ -2,7 +2,7 @@ import os
 from kivy.properties import ObjectProperty
 from kivy.uix.scrollview import ScrollView
 
-from kivy_client.contact import Contact
+from .contact import Contact
 
 
 class ContactList(ScrollView):
