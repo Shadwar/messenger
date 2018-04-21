@@ -15,11 +15,12 @@ class CommunicationList(object):
         self.client.handlers['send_message'] = self.send_message_handler
 
     def add_message_handler(self, command, response):
+        sender = command['from']
+        receiver = command['to']
+        message = command['message']
+        m_time = command['time']
+
         if response is None:
-            sender = command['from']
-            receiver = command['to']
-            message = command['message']
-            m_time = command['time']
 
             session = sessionmaker(bind=self.db_engine)()
             if receiver.startswith('#'):
@@ -57,8 +58,9 @@ class CommunicationList(object):
             public_key = rsa.PublicKey.load_pkcs1(bytes.fromhex(db_contact.public_key), format='DER')
             crypted_text = rsa.encrypt(message.encode(), public_key)
             text_message = MessagePacket(self.client.login, contact, crypted_text.hex())
-            # client.signals['text_message'].emit(contact, client.login, message)
             self.client.send_message(text_message)
+            self.client.messages[db_contact.contact].append({'u_from': self.client.login, 'message': message, 'time': db_message.time})
+            self.client.send_event({'action': 'ui_add_message', 'u_from': self.client.login, 'message': message, 'time': db_message.time})
         else:
             db_chat = session.query(SQLChat).filter_by(name=contact).first()
             if db_chat:
@@ -66,8 +68,9 @@ class CommunicationList(object):
                 session.add(db_message)
                 session.commit()
 
-                # client.signals['text_message'].emit(contact, client.login, message)
                 text_message = MessagePacket(self.client.login, contact, message)
                 self.client.send_message(text_message)
+                self.client.messages[db_message.name].append({'u_from': self.client.login, 'message': message, 'time': db_message.time})
+                self.client.send_event({'action': 'ui_add_message', 'u_from': self.client.login, 'message': message, 'time': db_message.time})
 
         session.close()

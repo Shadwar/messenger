@@ -15,6 +15,7 @@ class ChatScreen(BaseScreen):
         client.ui_handlers['ui_add_message'] = self.add_message_handler
         client.ui_handlers['ui_user_clicked'] = self.user_clicked_handler
         client.ui_handlers['ui_contact_clicked'] = self.contact_clicked_handler
+        client.ui_handlers['ui_send_message_clicked'] = self.send_message_clicked
 
     def on_pre_enter(self, *args):
         self.ids.user_info.text = 'shadwar'.ljust(16)
@@ -46,3 +47,12 @@ class ChatScreen(BaseScreen):
 
         for message in self.manager.client.messages[contact]:
             self.ids.communication_list.add_item(message, message['u_from'] == self.manager.client.login)
+
+    def send_message_clicked(self, command, response):
+        """ При нажатии на кнопку отправки сообщения, проверить текущий контакт и отправить событие бэкэнду """
+        if self.manager.client.current_contact:
+            self.manager.client.send_event({
+                'action': 'send_message',
+                'contact': self.manager.client.current_contact,
+                'message': command['message']
+            })
