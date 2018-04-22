@@ -8,7 +8,7 @@ from kivy.uix.popup import Popup
 from kivy.uix.scrollview import ScrollView
 
 from .contact import Contact
-from kivy_client.client import Client
+from client.client import Client
 
 
 class ContactList(ScrollView):

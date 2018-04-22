@@ -1,32 +1,10 @@
 import sqlite3
-import sqlalchemy.sql.default_comparator
 import sys
+from kivy import Config
 from pathlib import Path
-from PyQt5.QtWidgets import QApplication
-from PyQt5.QtCore import QThread, pyqtSignal
+
 from client.client import Client
-from client.client_window import ClientWindow
-
-
-class ClientThread(QThread):
-    login_ok_signal = pyqtSignal()
-    login_error_signal = pyqtSignal()
-    add_contact = pyqtSignal(str)
-    text_message = pyqtSignal(str, str, str)
-
-    def __init__(self, cl):
-        QThread.__init__(self)
-        self.client = cl
-        self.client.signals['login_ok'] = self.login_ok_signal
-        self.client.signals['login_error'] = self.login_error_signal
-        self.client.signals['add_contact'] = self.add_contact
-        self.client.signals['text_message'] = self.text_message
-
-    def __del__(self):
-        self.wait()
-
-    def run(self):
-        self.client.run()
+from client.client_app import ClientApp
 
 
 def create_db():
@@ -104,14 +82,10 @@ if __name__ == '__main__':
 
     create_db()
 
-    app = QApplication(sys.argv)
     client = Client(addr, port)
-    thr = ClientThread(client)
 
-    wnd = ClientWindow(client)
-    wnd.show()
-    wnd.init_signals()
+    Config.set('graphics', 'width', 1024)
+    Config.set('graphics', 'height', 800)
+    Config.write()
 
-    thr.start()
-
-    sys.exit(app.exec_())
+    ClientApp().run()

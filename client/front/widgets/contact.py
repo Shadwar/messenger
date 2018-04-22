@@ -1,6 +1,6 @@
 from kivy.properties import ObjectProperty, Clock
 from kivy.uix.button import Button
-from kivy_client.assets.assets import assets
+from client.assets.assets import assets
 
 
 class Contact(Button):

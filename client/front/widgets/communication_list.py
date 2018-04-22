@@ -1,7 +1,7 @@
 from kivy.properties import ObjectProperty
 from kivy.uix.scrollview import ScrollView
 
-from kivy_client.front.widgets.message import Message
+from client.front.widgets.message import Message
 
 
 class CommunicationList(ScrollView):

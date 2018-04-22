@@ -7,7 +7,7 @@ from PyQt5.QtGui import QPixmap, QIcon
 from sqlalchemy import and_
 from sqlalchemy.orm import sessionmaker
 
-from kivy_client.back.db import SQLUser, SQLContact, SQLMessage, SQLChat, SQLChatMessage
+from client.back.db import SQLUser, SQLContact, SQLMessage, SQLChat, SQLChatMessage
 from shared.generate import get_hash
 from shared.packets import GetContactsPacket, GetMessagesPacket, AuthenticatePacket, PresencePacket
 

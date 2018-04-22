@@ -3,66 +3,33 @@ import json
 import logging
 import select
 import queue
-import threading
-import asyncio
-from time import sleep
 
 from sqlalchemy import create_engine
+from collections import defaultdict
 
-from client.packet_handlers import *
+from client.back import UserInfo, CommunicationList, ContactList
+from shared.lib import Singleton
 
 logger = logging.getLogger('client')
 
-client_sended_messages_lock = threading.Lock()
-client_db_lock = threading.Lock()
 
-
-def handle_commands(client, recv_messages, sended_messages):
-    """ Обработка входящих команд """
-    global client_sended_messages_lock
-    db_engine = create_engine('sqlite:///client.db')
-
-    while True:
-        try:
-            message = recv_messages.get()
-        except queue.Empty:
-            pass
-        except KeyboardInterrupt:
-            break
-        else:
-            response = None
-            if 'origin' in message:
-                response = message
-
-                client_sended_messages_lock.acquire(blocking=True)
-                message = json.loads(bytes(sended_messages[response['origin']]).decode())
-                del sended_messages[response['origin']]
-                client_sended_messages_lock.release()
-
-            action = message['action']
-            if action in client.handlers:
-                client.handlers[action](db_engine).run(client, message, response)
-        sleep(0.1)
-
-
-async def send_to_server_coro(sock, message):
-    """ Отправка сообщений на сервер асинхронно """
-    sock.send(bytes(message))
-
-
-class Client(object):
+class Client(object, metaclass=Singleton):
     """ Клиент мессенджера
     """
-    def __init__(self, addr, port):
-        self.signals = dict()
+    def __init__(self, addr=None, port=None):
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.socket.connect((addr, port))
         self.socket.setblocking(False)
+        self.db_engine = create_engine('sqlite:///client.db')
         self.chats = {}
-        self.contacts = None
-        self.messages = dict()
+
+        self.contacts = []
+        self.messages = defaultdict(list)
+        self.current_contact = ''
+
         self.login = None
-        self.handlers = {}
+        self.handlers = dict()
+        self.ui_handlers = dict()
         self.init_handlers()
         self.recv_messages = queue.Queue()
         self.send_messages = queue.Queue()
@@ -71,49 +38,56 @@ class Client(object):
         self.public_key = None
         self.private_key = None
 
-    def run(self):
-        """ Запуск клиента, подключение к серверу, запуск цикла обработки сообщений
-        """
-        logger.info('Запуск клиента')
+    def update(self, dt):
+        read_s, write_s, _ = select.select([self.socket], [self.socket], [], 0)
 
-        threading.Thread(target=handle_commands, args=(self, self.recv_messages, self.sended_messages)).start()
-        send_loop = asyncio.new_event_loop()
+        if read_s:
+            fragments = []
+            while True:
+                try:
+                    chunk = self.socket.recv(2048)
+                except:
+                    break
+                fragments.append(chunk)
 
-        while True:
-            read_s, write_s, _ = select.select([self.socket], [self.socket], [], 0)
+            raw_data = b"".join(fragments)
 
-            if read_s:
-                fragments = []
-                while True:
-                    try:
-                        chunk = self.socket.recv(2048)
-                    except:
-                        break
-                    fragments.append(chunk)
+            if not raw_data:
+                self.socket.close()
+                exit(0)
+            else:
+                for command in self.parse_raw_received(raw_data.decode()):
+                    self.send_event(command)
 
-                raw_data = b"".join(fragments)
-
-                if not raw_data:
-                    self.socket.close()
-                    exit(0)
+        if write_s:
+            while not self.send_messages.empty():
+                try:
+                    message = self.send_messages.get_nowait()
+                except queue.Empty:
+                    pass
                 else:
-                    for command in self.parse_raw_received(raw_data.decode()):
-                        self.recv_messages.put(command)
+                    self.socket.send(bytes(message))
 
-            if write_s:
-                while not self.send_messages.empty():
-                    try:
-                        message = self.send_messages.get_nowait()
-                    except queue.Empty:
-                        pass
-                    else:
-                        task = send_loop.create_task(send_to_server_coro(self.socket, message))
-                        send_loop.run_until_complete(task)
+        try:
+            message = self.recv_messages.get_nowait()
+        except queue.Empty:
+            pass
+        except KeyboardInterrupt:
+            pass
+        else:
+            response = None
+            if 'origin' in message:
+                response = message
 
-            sleep(0.1)
+                message = json.loads(bytes(self.sended_messages[response['origin']]).decode())
+                del self.sended_messages[response['origin']]
 
-    def handle(self):
-        """ Обработка входящих сообщений """
+            print(message, response)
+            action = message['action']
+            if action in self.handlers:
+                self.handlers[action](message, response)
+            if action in self.ui_handlers:
+                self.ui_handlers[action](message, response)
 
     def send_message(self, message):
         self.message_id += 1
@@ -122,20 +96,12 @@ class Client(object):
         self.send_messages.put(message)
 
     def init_handlers(self):
-        self.handlers = dict({
-            'authenticate': AuthenticateHandler,
-            'add_contact': AddContactHandler,
-            'contact': ContactHandler,
-            'message': TextMessageHandler,
-            'save_avatar': SaveAvatarHandler,
-            'load_avatar': LoadAvatarHandler,
-            'authenticate_user': ClientAuthenticationHandler,
-            'send_message_to_server': SendMessageHandler,
-            'chat_create': ChatCreateHandler,
-            'chat_join': ChatJoinHandler,
-            'chat_contact': ChatContactHandler
-        })
-        pass
+        ContactList(self)
+        UserInfo(self)
+        CommunicationList(self)
+
+    def send_event(self, event):
+        self.recv_messages.put(event)
 
     def parse_raw_received(self, raw):
         """ Парсит входящий массив на отдельные команды"""
@@ -154,21 +120,21 @@ class Client(object):
                     command = ""
             index += 1
 
-        print(commands)
+        # print(commands)
         return commands
 
     def authenticate(self, login, password):
         """ Создание нового аккаунта и ключей шифрования """
-        self.recv_messages.put({'action': 'authenticate_user', 'login': login, 'password': password, 'client': self})
+        self.send_event({'action': 'authenticate_user', 'login': login, 'password': password, 'client': self})
 
     def send_text_message(self, contact, message):
         """ Отправка и шифрование текстового сообщения """
-        self.recv_messages.put({'action': 'send_message_to_server', 'contact': contact, 'message': message})
+        self.send_event({'action': 'send_message_to_server', 'contact': contact, 'message': message})
 
     def save_avatar(self, filename):
         """ Сохранение аватара пользователя в базу данных """
-        self.recv_messages.put({'action': 'save_avatar', 'filename': filename})
+        self.send_event({'action': 'save_avatar', 'filename': filename})
 
     def load_user_avatar(self, container):
         """ Установка аватара пользователя, если он есть в базе данных """
-        self.recv_messages.put({'action': 'load_avatar', 'container': container})
+        self.send_event({'action': 'load_avatar', 'container': container})

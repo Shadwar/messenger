@@ -2,7 +2,7 @@ import rsa
 import time
 from sqlalchemy.orm import sessionmaker
 
-from kivy_client.back.db import SQLChatMessage, SQLMessage, SQLContact, SQLChat
+from client.back.db import SQLChatMessage, SQLMessage, SQLContact, SQLChat
 from shared.packets import MessagePacket
 
 

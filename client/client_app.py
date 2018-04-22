@@ -4,13 +4,13 @@ from kivy.clock import Clock
 from kivy.lang import Builder
 from kivy.uix.screenmanager import ScreenManager
 
-from kivy_client.front import ChatScreen, LoginScreen, RegisterScreen
-from kivy_client.client import Client
+from client.front import ChatScreen, LoginScreen, RegisterScreen
+from client.client import Client
 
 
-for file in os.listdir('kivy_client/front/ui'):
+for file in os.listdir('client/front/ui'):
     if file.endswith('.kv'):
-        Builder.load_file(os.path.join('kivy_client/front/ui', file))
+        Builder.load_file(os.path.join('client/front/ui', file))
 
 
 class ClientApp(App):

@@ -1,7 +1,7 @@
 from kivy.properties import ObjectProperty
 
 from .base_screen import BaseScreen
-from kivy_client.client import Client
+from client.client import Client
 
 
 class LoginScreen(BaseScreen):

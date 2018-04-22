@@ -1,6 +1,6 @@
 from sqlalchemy.orm import sessionmaker
 
-from kivy_client.back.db import SQLContact, SQLChat
+from client.back.db import SQLContact, SQLChat
 from shared.packets import GetMessagesPacket, ChatCreatePacket, FindContactsPacket, AddContactPacket, ChatJoinPacket
 
 
