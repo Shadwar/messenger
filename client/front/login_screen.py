@@ -17,8 +17,8 @@ class LoginScreen(BaseScreen):
             self.manager.client.authenticate(username, password)
 
     def register_handlers(self, client):
-        client.ui_handlers['login_error'] = self.login_error_handler
-        client.ui_handlers['login_ok'] = self.login_ok_handler
+        client.ui_handlers['ui_login_error'] = self.login_error_handler
+        client.ui_handlers['ui_login_ok'] = self.login_ok_handler
 
     def login_error_handler(self, command, response):
         pass

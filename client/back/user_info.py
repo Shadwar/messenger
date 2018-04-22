@@ -108,9 +108,9 @@ class UserInfo(object):
 
             session.close()
 
-            self.client.send_event({'action': 'login_ok'})
+            self.client.send_event({'action': 'ui_login_ok'})
         else:
-            self.client.send_event({'action': 'login_error'})
+            self.client.send_event({'action': 'ui_login_error'})
 
     def client_authentication_handler(self, command, response):
         session = sessionmaker(bind=self.db_engine)()
