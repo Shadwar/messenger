@@ -123,14 +123,6 @@ class Client(object, metaclass=Singleton):
         # print(commands)
         return commands
 
-    def authenticate(self, login, password):
-        """ Создание нового аккаунта и ключей шифрования """
-        self.send_event({'action': 'authenticate_user', 'login': login, 'password': password, 'client': self})
-
-    def send_text_message(self, contact, message):
-        """ Отправка и шифрование текстового сообщения """
-        self.send_event({'action': 'send_message_to_server', 'contact': contact, 'message': message})
-
     def save_avatar(self, filename):
         """ Сохранение аватара пользователя в базу данных """
         self.send_event({'action': 'save_avatar', 'filename': filename})

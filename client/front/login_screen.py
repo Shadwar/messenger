@@ -14,7 +14,12 @@ class LoginScreen(BaseScreen):
         username = self.ids.username_input.text
         password = self.ids.password_input.text
         if username and password:
-            self.manager.client.authenticate(username, password)
+            self.manager.client.send_event({
+                'action': 'authenticate_user',
+                'login': username,
+                'password': password,
+                'client': self.manager.client
+            })
 
     def register_handlers(self, client):
         client.ui_handlers['ui_login_error'] = self.login_error_handler
