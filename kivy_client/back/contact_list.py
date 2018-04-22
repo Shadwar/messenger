@@ -1,7 +1,7 @@
 from sqlalchemy.orm import sessionmaker
 
 from kivy_client.back.db import SQLContact, SQLChat
-from shared.packets import GetMessagesPacket
+from shared.packets import GetMessagesPacket, ChatCreatePacket
 
 
 class ContactList(object):
@@ -39,17 +39,17 @@ class ContactList(object):
     def chat_create_handler(self, command, response):
         chat_name = command['room']
         session = sessionmaker(bind=self.db_engine)()
-        db_chat = session.query(SQLChat).filter_by(login=self.client.login).filter(SQLChat.name.ilike(chat_name)).first()
-        if db_chat:
-            pass
-
         if response and response['response'] == 202:
             name = response['alert']
             db_chat = SQLChat(login=self.client.login, name=name)
             session.add(db_chat)
             session.commit()
-            # client.signals['add_contact'].emit(name)
-
+            self.client.send_event({'action': 'ui_add_contact', 'contact': name})
+        else:
+            db_chat = session.query(SQLChat).filter_by(login=self.client.login).filter(SQLChat.name.ilike(chat_name)).first()
+            if not db_chat:
+                message = ChatCreatePacket(chat_name)
+                self.client.send_message(message)
         session.close()
 
     def chat_join_handler(self, command, response):

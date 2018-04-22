@@ -1,5 +1,24 @@
 #:kivy 1.10.0
 
+<CreateChat@Popup>:
+    title: 'Создать чат'
+    size_hint: None, None
+    size: 300, 130
+    GridLayout:
+        cols: 1
+        spacing: 10
+
+        TextInput:
+            id: chat_name_input
+            size_hint: 1, None
+            height: 30
+            font_size: 18
+        Button:
+            id: submit_button
+            text: 'Создать'
+            size_hint: 1, None
+            height: 30
+
 <UserInfo>:
     background_normal: ''
     background_color: 1, 1, 1, 1

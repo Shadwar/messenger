@@ -82,6 +82,7 @@ class Client(object, metaclass=Singleton):
                 message = json.loads(bytes(self.sended_messages[response['origin']]).decode())
                 del self.sended_messages[response['origin']]
 
+            print(message, response)
             action = message['action']
             if action in self.handlers:
                 self.handlers[action](message, response)
