@@ -10,3 +10,4 @@ from .del_contact_packet_handler import DelContactPacketHandler
 from .message_packet_handler import MessagePacketHandler
 from .presence_packet_handler import PresencePacketHandler
 from .quit_packet_handler import QuitPacketHandler
+from .find_contacts_packet_handler import FindContactsPacketHandler

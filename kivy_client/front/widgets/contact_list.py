@@ -20,7 +20,8 @@ class ContactList(ScrollView):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.client = Client()
-        Clock.schedule_once(self.init_buttons, 0)
+        Clock.schedule_once(self.init_create_chat_button, 0)
+        Clock.schedule_once(self.init_find_user_button, 0)
 
     def add_item(self, login, avatar=None):
         contact = Contact(avatar=avatar, text=login)
@@ -28,13 +29,11 @@ class ContactList(ScrollView):
         self.ids.container.add_widget(contact)
 
     def on_press_contact(self, contact):
-        client = Client()
-
         def inner():
-            client.send_event({'action': 'ui_contact_clicked', 'contact': contact.text.strip()})
+            self.client.send_event({'action': 'ui_contact_clicked', 'contact': contact.text.strip()})
         return inner
 
-    def init_buttons(self, dt):
+    def init_create_chat_button(self, dt):
         create_chat_popup = Factory.CreateChat()
 
         def create_chat():
@@ -48,3 +47,31 @@ class ContactList(ScrollView):
         create_chat_popup.ids.submit_button.on_release = create_chat
 
         self.ids.create_chat.on_press = create_chat_popup.open
+
+    def init_find_user_button(self, dt):
+        find_user_popup = Factory.FindUser()
+
+        def find_user():
+            name = find_user_popup.ids.contact_name.text
+            if name:
+                find_user_popup.ids.container.clear_widgets()
+                self.client.send_event({'action': 'find_contacts', 'name': name})
+
+        def contact_pressed(name):
+            def inner():
+                if name.startswith('#'):
+                    self.client.send_event({'action': 'chat_join', 'room': name})
+                else:
+                    self.client.send_event({'action': 'add_contact', 'contact': name})
+            return inner
+
+        def found_contact(command, response):
+            contact = Contact(avatar=None, text=command['name'])
+            contact.on_release = contact_pressed(command['name'])
+            find_user_popup.ids.container.add_widget(contact)
+
+        find_user_popup.ids.find_contact.on_release = find_user
+        find_user_popup.ids.submit_button.on_release = find_user_popup.dismiss
+
+        self.ids.find_user.on_release = find_user_popup.open
+        self.client.ui_handlers['ui_found_contact'] = found_contact

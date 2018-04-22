@@ -1,7 +1,7 @@
 from sqlalchemy.orm import sessionmaker
 
 from kivy_client.back.db import SQLContact, SQLChat
-from shared.packets import GetMessagesPacket, ChatCreatePacket
+from shared.packets import GetMessagesPacket, ChatCreatePacket, FindContactsPacket, AddContactPacket, ChatJoinPacket
 
 
 class ContactList(object):
@@ -15,6 +15,8 @@ class ContactList(object):
         self.client.handlers['chat_join'] = self.chat_join_handler
         self.client.handlers['chat_contact'] = self.chat_contact_handler
         self.client.handlers['contact'] = self.contact_handler
+        self.client.handlers['find_contacts'] = self.find_contacts_handler
+        self.client.handlers['found_contact'] = self.found_contact_handler
 
     def add_contact_handler(self, command, response):
         contact = command['contact']
@@ -22,14 +24,16 @@ class ContactList(object):
         db_contact = session.query(SQLContact).filter_by(login=self.client.login).filter(SQLContact.contact.ilike(contact)).first()
         if db_contact:
             pass
-
-        if response and response['response'] == 200:
-            login = response['alert_0']
-            public_key = response['alert_1']
-            db_contact = SQLContact(login=self.client.login, contact=contact, public_key=public_key)
-            session.add(db_contact)
-            session.commit()
-            self.client.send_event({'action': 'ui_add_contact', 'contact': contact})
+        else:
+            if not response:
+                self.client.send_message(AddContactPacket(command['contact']))
+            elif response and response['response'] == 200:
+                login = response['alert_0']
+                public_key = response['alert_1']
+                db_contact = SQLContact(login=self.client.login, contact=contact, public_key=public_key)
+                session.add(db_contact)
+                session.commit()
+                self.client.send_event({'action': 'ui_add_contact', 'contact': contact})
 
         session.close()
 
@@ -58,13 +62,15 @@ class ContactList(object):
         db_chat = session.query(SQLChat).filter_by(login=self.client.login).filter(SQLChat.name.ilike(chat_name)).first()
         if db_chat:
             pass
-
-        if response and response['response'] == 202:
-            name = response['alert']
-            db_chat = SQLChat(login=self.client.login, name=name)
-            session.add(db_chat)
-            session.commit()
-            # client.signals['add_contact'].emit(name)
+        else:
+            if not response:
+                self.client.send_message(ChatJoinPacket(chat_name))
+            elif response and response['response'] == 202:
+                name = response['alert']
+                db_chat = SQLChat(login=self.client.login, name=name)
+                session.add(db_chat)
+                session.commit()
+                self.client.send_event({'action': 'ui_add_contact', 'contact': name})
 
         session.close()
 
@@ -98,3 +104,11 @@ class ContactList(object):
         self.client.send_message(get_messages)
         self.client.send_event({'action': 'ui_add_contact', 'contact': contact})
         session.close()
+
+    def find_contacts_handler(self, command, response):
+        if not response:
+            message = FindContactsPacket(command['name'])
+            self.client.send_message(message)
+
+    def found_contact_handler(self, command, response):
+        self.client.send_event({'action': 'ui_found_contact', 'name': command['name']})

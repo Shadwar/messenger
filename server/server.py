@@ -97,7 +97,8 @@ class Server(object):
             'get_messages': GetMessagesPacketHandler,
             'message': MessagePacketHandler,
             'presence': PresencePacketHandler,
-            'quit': QuitPacketHandler
+            'quit': QuitPacketHandler,
+            'find_contacts': FindContactsPacketHandler
         })
 
     @staticmethod

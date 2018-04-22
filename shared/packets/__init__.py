@@ -17,3 +17,5 @@ from .probe_packet import ProbePacket
 from .quit_packet import QuitPacket
 from .response_packet import ResponsePacket
 from .welcome_packet import WelcomePacket
+from .find_contacts_packet import FindContactsPacket
+from .found_contact_packet import FoundContactPacket
