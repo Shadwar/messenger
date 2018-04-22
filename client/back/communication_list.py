@@ -21,7 +21,6 @@ class CommunicationList(object):
         m_time = command['time']
 
         if response is None:
-
             session = sessionmaker(bind=self.db_engine)()
             if receiver.startswith('#'):
                 db_message = SQLChatMessage(login=self.client.login, name=receiver, contact=sender, message=message, time=m_time)
@@ -33,7 +32,11 @@ class CommunicationList(object):
                 if self.client.current_contact == chat:
                     self.client.send_event({'action': 'ui_add_message', 'u_from': db_message.contact, 'message': message, 'time': m_time})
             else:
-                message = rsa.decrypt(bytes.fromhex(message), rsa.key.PrivateKey.load_pkcs1(bytes.fromhex(self.client.private_key), format='DER'))
+                message_chunks = [bytes.fromhex(message)[i:i+64] for i in range(0, len(bytes.fromhex(message)), 64)]
+                decrypted_chunks = []
+                for chunk in message_chunks:
+                    decrypted_chunks.append(rsa.decrypt(chunk, rsa.key.PrivateKey.load_pkcs1(bytes.fromhex(self.client.private_key), format='DER')))
+                message = b''.join(decrypted_chunks)
                 db_message = SQLMessage(user=self.client.login, u_from=sender, u_to=receiver, message=message.decode(), time=m_time)
                 session.add(db_message)
                 session.commit()
@@ -56,7 +59,9 @@ class CommunicationList(object):
             session.commit()
 
             public_key = rsa.PublicKey.load_pkcs1(bytes.fromhex(db_contact.public_key), format='DER')
-            crypted_text = rsa.encrypt(message.encode(), public_key)
+            encoded = message.encode()
+            message_chunks = [rsa.encrypt(encoded[i:i+40], public_key) for i in range(0, len(encoded), 40)]
+            crypted_text = b''.join(message_chunks)
             text_message = MessagePacket(self.client.login, contact, crypted_text.hex())
             self.client.send_message(text_message)
             self.client.messages[db_contact.contact].append({'u_from': self.client.login, 'message': message, 'time': db_message.time})

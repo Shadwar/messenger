@@ -30,10 +30,10 @@ class ContactList(object):
             elif response and response['response'] == 200:
                 login = response['alert_0']
                 public_key = response['alert_1']
-                db_contact = SQLContact(login=self.client.login, contact=contact, public_key=public_key)
+                db_contact = SQLContact(login=self.client.login, contact=login, public_key=public_key)
                 session.add(db_contact)
                 session.commit()
-                self.client.send_event({'action': 'ui_add_contact', 'contact': contact})
+                self.client.send_event({'action': 'ui_add_contact', 'contact': login})
 
         session.close()
 
