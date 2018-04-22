@@ -3,6 +3,7 @@ from kivy.uix.widget import Widget
 
 from kivy_client.client import Client
 from kivy_client.front.widgets.smile import Smile
+from kivy_client.assets.smiles import smiles_dict
 
 
 class CommunicationInput(Widget):
@@ -17,8 +18,9 @@ class CommunicationInput(Widget):
         Clock.schedule_once(self.init_submit, 0)
 
     def init_smiles(self, dt):
-        for i in range(5):
-            smile = Smile(text='')
+        for text, image in smiles_dict.items():
+            smile = Smile(text=text)
+            smile.ids.image.source = image
             self.ids.smile_container.add_widget(smile)
 
     def init_submit(self, dt):
