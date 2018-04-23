@@ -1,5 +1,6 @@
-from kivy.properties import ObjectProperty
+from kivy.properties import ObjectProperty, Clock
 from kivy.uix.scrollview import ScrollView
+from kivy.uix.image import Image
 
 from client.front.widgets.message import Message
 
@@ -12,9 +13,9 @@ class CommunicationList(ScrollView):
         sender = message['u_from']
         text = message['message']
 
-        contact = Message(text=sender + ':\n' + text, is_user=is_user)
-        contact.bind(texture_size=contact.setter('size'))
-        self.ids.container.add_widget(contact)
+        message = Message(text=sender + ':\n' + text, is_user=is_user)
+        message.bind(texture_size=message.setter('size'))
+        self.ids.container.add_widget(message)
 
     def clear(self):
         self.ids.container.clear_widgets()

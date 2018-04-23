@@ -150,6 +150,8 @@
     font_size: 18
     halign: 'left'
     padding: (10, 10)
+    font_name: "client/assets/OpenSansEmoji.ttf"
+    font_size: 20
 
 <CommunicationList>:
     do_scroll_x: False
@@ -172,13 +174,13 @@
             do_scroll_x: False
 
 <Smile>:
+    background_normal: ''
+    background_color: 1, 1, 1, 1
     size: 30, 30
     size_hint_x: None
-    Image:
-        id: image
-        center_x: self.parent.center_x
-        center_y: self.parent.center_y
-
+    font_name: "client/assets/OpenSansEmoji.ttf"
+    font_size: 20
+    color: 0, 0, 0, 1
 
 <CommunicationInput>:
     GridLayout:
@@ -197,7 +199,8 @@
 
         TextInput:
             id: input_field
-            font_size: 16
+            font_size: 20
+            font_name: "client/assets/OpenSansEmoji.ttf"
 
     Button:
         id: submit_button

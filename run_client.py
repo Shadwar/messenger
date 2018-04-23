@@ -1,5 +1,10 @@
 import sqlite3
 import sys
+
+import os
+
+os.environ["KIVY_TEXT"] = 'pil'
+
 from kivy import Config
 from pathlib import Path
 
@@ -83,6 +88,9 @@ if __name__ == '__main__':
     create_db()
 
     client = Client(addr, port)
+
+    print(os.environ)
+
 
     Config.set('graphics', 'width', 1024)
     Config.set('graphics', 'height', 800)

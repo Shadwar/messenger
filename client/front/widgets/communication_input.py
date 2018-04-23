@@ -3,7 +3,14 @@ from kivy.uix.widget import Widget
 
 from client.client import Client
 from client.front.widgets.smile import Smile
-from client.assets.smiles import smiles_dict
+
+smiles_dict = {
+    ':)': u'😀',
+    ':D': u'😃',
+    ';)': u'😉',
+    ':P': u'😋',
+    ':(': u'😞'
+}
 
 
 class CommunicationInput(Widget):
@@ -18,9 +25,9 @@ class CommunicationInput(Widget):
         Clock.schedule_once(self.init_submit, 0)
 
     def init_smiles(self, dt):
-        for text, image in smiles_dict.items():
-            smile = Smile(text=text)
-            smile.ids.image.source = image
+        for text, code in smiles_dict.items():
+            smile = Smile(text=code)
+            smile.on_release = self.smile_clicked(code)
             self.ids.smile_container.add_widget(smile)
 
     def init_submit(self, dt):
@@ -30,3 +37,8 @@ class CommunicationInput(Widget):
             self.client.send_event({'action': 'ui_send_message_clicked', 'message': text})
 
         self.ids.submit_button.on_press = inner
+
+    def smile_clicked(self, smile):
+        def inner():
+            self.ids.input_field.text += smile
+        return inner
