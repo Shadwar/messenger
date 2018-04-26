@@ -1,6 +1,7 @@
 from sqlalchemy.orm import sessionmaker
 
 from server.alchemy import SQLUser
+from server.user import User
 from shared.generate import get_hash
 from shared.packets import ResponsePacket
 from .packet_handler import PacketHandler
@@ -25,7 +26,7 @@ class AuthenticatePacketHandler(PacketHandler):
             session.add(db_user)
             session.commit()
 
-        user = protocol.User()
+        user = User()
         user.gid = db_user.gid
         user.login = db_user.login
         user.public_key = db_user.public_key

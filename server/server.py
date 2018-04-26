@@ -4,7 +4,7 @@ import json
 from sqlalchemy import create_engine
 
 from server.packet_handlers import *
-from shared.packets import WelcomePacket
+from server.server_protocol import ServerProtocol
 
 
 class Server(object):
@@ -14,44 +14,12 @@ class Server(object):
     handlers = None
     db_engine = None
 
-    class ServerProtocol(asyncio.Protocol):
-        """ Класс протокола взаимодействия с клиентом """
-        class User(object):
-            def __init__(self):
-                self.gid = None
-                self.login = None
-                self.public_key = None
-                self.protocol = None
-
-        def connection_made(self, transport):
-            self.transport = transport
-            self.peername = transport.get_extra_info("peername")
-            self.user = None
-            print("Соединение создано: {}".format(self.peername))
-            Server.clients.append(self)
-            self.send_packet(WelcomePacket())
-
-        def data_received(self, data):
-            decoded = Server.parse_raw_received(data.decode())
-            print("data_received: {}".format(decoded))
-            for command in decoded:
-                Server.handle_command(self, command)
-
-        def connection_lost(self, exc):
-            print("Соединение разорвано: {}".format(self.peername))
-            self.transport = None
-            Server.remove_user(self)
-
-        def send_packet(self, packet):
-            """ Отправка пакета пользователю """
-            self.transport.write(bytes(packet))
-
     def __init__(self, ip, port):
         Server.init_handlers()
         Server.db_engine = create_engine('sqlite:///server.db')
 
         self.loop = asyncio.get_event_loop()
-        server_coro = self.loop.create_server(self.ServerProtocol, host=ip , port=port)
+        server_coro = self.loop.create_server(ServerProtocol, host=ip , port=port)
         server = self.loop.run_until_complete(server_coro)
 
         for sock in server.sockets:
