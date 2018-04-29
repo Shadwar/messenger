@@ -62,7 +62,8 @@ def create_db():
       create table contacts (
         gid integer primary key autoincrement,
         user integer references users (gid),
-        contact integer references users (gid)
+        contact integer references users (gid),
+        created_date text
       )
     """)
 

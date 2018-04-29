@@ -1,4 +1,5 @@
-from sqlalchemy import Column, Integer, Unicode, UniqueConstraint, ForeignKey, create_engine, LargeBinary
+import datetime
+from sqlalchemy import Column, Integer, Unicode, DateTime, UniqueConstraint, ForeignKey, create_engine, LargeBinary
 from sqlalchemy.orm import sessionmaker, relationship, defer, load_only
 from sqlalchemy.ext.declarative import declarative_base
 
@@ -82,9 +83,10 @@ class SQLContact(SQLBase):
     gid = Column(Integer(), primary_key=True)
     user = Column(Integer(), ForeignKey('users.gid'))
     contact = Column(Integer(), ForeignKey('users.gid'))
+    created_date = Column(DateTime, default=datetime.datetime.utcnow)
 
     p_user = relationship("SQLUser", foreign_keys=[user])
     p_contact = relationship("SQLUser", foreign_keys=[contact])
 
     def __repr__(self):
-        return 'SQLContact<user = %d, contact = %d>' % (self.user, self.contact)
+        return 'SQLContact<user = %d, contact = %d, date = %s>' % (self.user, self.contact, self.created_date)
