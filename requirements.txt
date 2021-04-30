@@ -13,7 +13,7 @@ Pygments==2.2.0
 pymongo==3.6.1
 PyQt5==5.10
 requests==2.18.4
-rsa==3.4.2
+rsa==4.7
 sip==4.19.7
 SQLAlchemy==1.2.3
 urllib3==1.22
