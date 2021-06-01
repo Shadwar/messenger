@@ -16,4 +16,4 @@ requests==2.18.4
 rsa==3.4.2
 sip==4.19.7
 SQLAlchemy==1.2.3
-urllib3==1.22
+urllib3==1.26.5
