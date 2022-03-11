@@ -7,7 +7,7 @@ docutils==0.14
 idna==2.6
 Kivy==1.10.0
 Kivy-Garden==0.1.4
-Pillow==5.1.0
+Pillow==9.0.1
 pyasn1==0.4.2
 Pygments==2.2.0
 pymongo==3.6.1
